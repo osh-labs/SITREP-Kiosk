@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-06-13T06:42:00-04:00",
+  "display": { "mode": "morning", "dwell_seconds": 12, "refresh_seconds": 30 },
+  "location": { "name": "Atlanta Metro", "lat": 33.749, "lon": -84.388 },
+  "briefing": {
+    "bottom_line": "Heat is today's primary hazard. The index climbs into the danger band by early afternoon, thunderstorms develop after 2 PM with a marginal lightning threat, and air quality is Code Orange. Recommend heavy work before noon, hourly hydration, and clearing elevated and exposed work once storms move in.",
+    "watch_for": [
+      "Heat index to ~104°F after noon — heat-illness risk",
+      "PM thunderstorms after 2 PM — lightning",
+      "Air quality Code Orange — pace the sensitive crew"
+    ],
+    "source": "model",
+    "generated_at": "2026-06-13T06:40:00-04:00",
+    "sources": ["NWS FFC", "SPC"]
+  },
+  "hazards": {
+    "ranked": [
+      { "key": "heat_index", "rank": 1, "label": "Heat index to ~104°F after noon", "severity": "danger" },
+      { "key": "thunderstorms", "rank": 2, "label": "PM thunderstorms after 2 PM", "severity": "watch" }
+    ],
+    "aqi_callout": { "aqi": 105, "category": "Unhealthy for Sensitive Groups", "label": "Code Orange" }
+  },
+  "weather": {
+    "current": { "temp_f": 78, "feels_like_f": 82, "wind": { "dir": "SW", "speed_mph": 6, "gust_mph": null }, "summary": "Partly cloudy" },
+    "today": { "high_f": 96, "low_f": 75, "heat_index_f": 104, "pop_pct": 40, "pop_window": "after 2 PM", "daylight_until": "20:51", "summary": "PM storms" },
+    "source": { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" }
+  },
+  "commute": {
+    "current": { "temp_f": 91, "feels_like_f": 99, "summary": "Storms ending ~6 PM" },
+    "traffic": [
+      { "text": "I-20 EB — heavy, about +18 min", "type": "congestion" },
+      { "text": "GA-400 SB — incident @ Northridge", "type": "incident" }
+    ],
+    "source": { "name": "NWS, 511GA", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:41:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T06:41:00-04:00" }
+  },
+  "disruptions": {
+    "traffic": [
+      { "text": "I-285 WB @ Ashford-Dunwoody — crash, 2 lanes blocked", "type": "crash" },
+      { "text": "I-75 NB @ MM 251 — construction, delays", "type": "construction" }
+    ],
+    "alerts": [
+      { "text": "Heat Advisory — metro-wide, until 8 PM", "event": "Heat Advisory", "severity": "advisory" }
+    ],
+    "source": { "name": "511GA, NWS", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:41:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T06:41:00-04:00" }
+  },
+  "forecast_3day": {
+    "days": [
+      { "name": "SAT 14", "high_f": 97, "low_f": 75, "summary": "Storms 50%", "icon": "storm" },
+      { "name": "SUN 15", "high_f": 94, "low_f": 73, "summary": "Storms 30%", "icon": "storm" },
+      { "name": "MON 16", "high_f": 90, "low_f": 71, "summary": "Clear", "icon": "clear" }
+    ],
+    "spc_outlook": { "text": "Slight risk Sat (metro edge)", "category": "slight", "day": 1 },
+    "source": { "name": "NWS FFC, SPC", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:40:00-04:00", "age_seconds": 120, "last_good_at": "2026-06-13T06:40:00-04:00" }
+  },
+  "sources": {
+    "nws":    { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" },
+    "spc":    { "name": "SPC",     "ok": true, "stale": false, "fetched_at": "2026-06-13T06:40:00-04:00", "age_seconds": 120, "last_good_at": "2026-06-13T06:40:00-04:00" },
+    "ga511":  { "name": "511GA",   "ok": true, "stale": false, "fetched_at": "2026-06-13T06:41:00-04:00", "age_seconds": 60,  "last_good_at": "2026-06-13T06:41:00-04:00" },
+    "airnow": { "name": "AirNow",  "ok": true, "stale": false, "fetched_at": "2026-06-13T06:00:00-04:00", "age_seconds": 2520, "last_good_at": "2026-06-13T06:00:00-04:00" }
+  }
+}
