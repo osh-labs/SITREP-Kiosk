@@ -31,4 +31,47 @@ appended from the sub-agents' findings._
 - [ ] **Dwell time** — 12s per slide (config `display.dwell_seconds`).
 
 ## Agent-reported items
-<!-- Filled in after the sub-agents complete. -->
+
+### Backend
+- [ ] **SPC parser is unverified against the live feed.** Implemented against
+  `https://www.spc.noaa.gov/products/outlook/day{1,2,3}otlk_cat.nolyr.geojson`
+  with a point-in-polygon test. These URLs exist but weren't confirmable as
+  stable at build time. If the structure differs, only `backend/sitrep/sources/spc.py`
+  needs updating; it fails closed (`_ok=False`) so other sources are unaffected.
+- [ ] **Heat threshold nuance.** Config `hazard_thresholds.heat_index_f.danger`
+  is `103` — the NWS heat-index *work band* (firm). NWS issues a *Heat Advisory*
+  around a heat index of ~105°F (the "verify against FFC" value). These are two
+  different things and the code keys on both (work band + active alert name), so
+  no code change is needed; just confirm the FFC numbers when you have them.
+- [ ] **AirNow search radius** is hardcoded to 25 miles in `airnow.py`. Reasonable
+  default; can be made config-driven if you want.
+
+### Frontend
+- [ ] **No visual/browser verification was possible** (no headless browser in the
+  build environment). Logic was verified via 40+ Node assertions across all three
+  scenarios, and I booted the real backend and confirmed it serves `index.html`,
+  `app.js`, and `styles.css` (HTTP 200) alongside `/api/state`. Layout/legibility
+  on the actual 1080p TV should be eyeballed during the M4 pilot.
+- [ ] **AQI color categories** — the AQI callout currently uses one amber style;
+  full EPA green→maroon category coloring would be more precise (minor enhancement).
+- [ ] **Branding/palette/font** — neutral high-contrast dark theme, system fonts,
+  no logo (see §4 above). Brand colors live in `:root` CSS variables; a logo would
+  go in `frontend/assets/` with a small header edit. No web fonts (kiosk may be offline).
+
+### Deploy
+- [ ] **Kiosk username** (default `kiosk`) and **install directory** (default
+  `/opt/sitrep`) — overridable via `install.sh --kiosk-user` / `--install-dir`.
+- [ ] **Auto-login** must be enabled for the kiosk user on the display manager —
+  a one-time manual step documented in `deploy/README.md` §2.5.
+- [ ] **Distro** — install script/runbook target Debian/Ubuntu (`apt`); Fedora/RHEL
+  need package-name swaps (logic is distro-neutral).
+- Confirmed consistent across agents: backend entrypoint `python -m backend.sitrep`
+  and health endpoint `/healthz` match what the systemd unit and kiosk launcher expect.
+
+## Verified working (build pass, 2026-06-13)
+- `pip install -r requirements.txt` clean; **69/69 backend tests pass**.
+- Backend boots in demo mode and serves: `/healthz` → `{"ok":true}`,
+  `/api/state` (all 10 contract keys, ranked hazards, morning/afternoon/degraded
+  scenarios), and the frontend at `/` (`index.html` + `app.js` + `styles.css`, all 200).
+- With **no API keys and no flags**, the backend auto-enables demo mode instead of
+  crashing — the product is demonstrable today; plug keys into `.env` for live data.

@@ -26,5 +26,18 @@ limits are in CLAUDE.md and PRD Section 7-8.
 
 ## Status
 
-Requirements approved. Application code not yet written — that is the build
-agents' job, following CLAUDE.md and the PRD.
+Requirements approved. First build pass complete (M0–M3): Python backend
+(ingestion, deterministic hazard ranking, Anthropic briefing + templated
+fallback, localhost API), static carousel frontend, and kiosk/deploy layer.
+Runs end-to-end today in **demo mode** with no API keys (`SITREP_DEMO=1`, or
+automatic when no keys are present). Plug keys into `.env` for live data.
+
+Quick start:
+```
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+SITREP_DEMO=1 .venv/bin/python -m backend.sitrep   # http://localhost:8080
+```
+
+Outstanding items for review are in `docs/DECISIONS_NEEDED.md`. M4 (pilot on the
+safety-area TV) remains, plus verifying the SPC feed and FFC thresholds against
+live data — see that file.
