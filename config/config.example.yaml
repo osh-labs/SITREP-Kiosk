@@ -1,0 +1,50 @@
+# Field SITREP Board — example configuration
+# Copy to config.yaml and adjust. All hazard triggers live here, not in code.
+
+location:
+  name: "Atlanta Metro"
+  lat: 33.7490
+  lon: -84.3880
+
+display:
+  dwell_seconds: 12
+  mode_windows:
+    morning_until: "12:00"   # local time; afternoon mode thereafter
+  work_hours:                # used for "during work hours" trigger checks
+    start: "06:00"
+    end: "18:00"
+
+polling_seconds:
+  nws: 900        # 10-15 min
+  spc: 1800
+  airnow: 1800    # hourly NowCast; stay well under 500 req/hr/service
+  ga511: 90       # within 10 calls / 60 s
+  briefing: 1800  # regenerate BLUF on schedule; also regenerate on material change
+
+staleness_seconds:
+  default: 3600   # beyond this, mark a source stale and show the degraded state
+
+# Hazard trigger values. See PRD Section 12 for the confidence tier of each.
+# firm = published standard | verify = confirm against WFO FFC | default = set to taste
+hazard_thresholds:
+  heat_index_f:            # firm (NWS heat-index work bands)
+    extreme_caution: 90    # callout appears at/above this during work hours
+    danger: 103
+    extreme_danger: 125
+  thunderstorm_probability_pct: 30   # default
+  rain:                              # default
+    pop_pct: 50
+    qpf_in: 0.25
+  wind_gust_mph_flag: 30             # default; equipment manuals govern go/no-go
+  aqi_callout: 101                   # firm (Code Orange / Unhealthy for Sensitive Groups)
+  winter:                            # triggers firm; values verify against FFC
+    temp_f_with_precip: 32
+
+# D5 ranking, highest first. AQI is handled as a separate callout, not ranked here.
+ranking_order:
+  - severe_weather
+  - heat_index
+  - winter_weather
+  - thunderstorms
+  - rain
+  - wind

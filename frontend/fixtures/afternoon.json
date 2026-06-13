@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-06-13T15:20:00-04:00",
+  "display": { "mode": "afternoon", "dwell_seconds": 12, "refresh_seconds": 30 },
+  "location": { "name": "Atlanta Metro", "lat": 33.749, "lon": -84.388 },
+  "briefing": {
+    "bottom_line": "Storms taper through the evening commute; roads stay wet and air quality remains Code Orange. Allow extra time on the drive and watch standing water on the interstates.",
+    "watch_for": [
+      "Storms ending ~6 PM — wet roads, reduced visibility",
+      "Air quality Code Orange — sensitive crew pace down"
+    ],
+    "source": "model",
+    "generated_at": "2026-06-13T15:18:00-04:00",
+    "sources": ["NWS FFC", "511GA"]
+  },
+  "hazards": {
+    "ranked": [
+      { "key": "thunderstorms", "rank": 1, "label": "Storms ending ~6 PM", "severity": "watch" }
+    ],
+    "aqi_callout": { "aqi": 103, "category": "Unhealthy for Sensitive Groups", "label": "Code Orange" }
+  },
+  "weather": {
+    "current": { "temp_f": 91, "feels_like_f": 99, "wind": { "dir": "W", "speed_mph": 8, "gust_mph": 18 }, "summary": "Showers" },
+    "today": { "high_f": 96, "low_f": 75, "heat_index_f": 101, "pop_pct": 60, "pop_window": "until 6 PM", "daylight_until": "20:51", "summary": "Storms tapering" },
+    "source": { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T15:19:00-04:00" }
+  },
+  "commute": {
+    "current": { "temp_f": 91, "feels_like_f": 99, "summary": "Storms ending ~6 PM" },
+    "traffic": [
+      { "text": "I-20 EB — heavy, about +18 min", "type": "congestion" },
+      { "text": "GA-400 SB — incident @ Northridge", "type": "incident" }
+    ],
+    "source": { "name": "NWS, 511GA", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T15:19:00-04:00" }
+  },
+  "disruptions": {
+    "traffic": [
+      { "text": "I-20 EB — heavy, about +18 min", "type": "congestion" },
+      { "text": "GA-400 SB — incident @ Northridge", "type": "incident" }
+    ],
+    "alerts": [],
+    "source": { "name": "511GA, NWS", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T15:19:00-04:00" }
+  },
+  "forecast_3day": {
+    "days": [
+      { "name": "SAT 14", "high_f": 97, "low_f": 75, "summary": "Storms 50%", "icon": "storm" },
+      { "name": "SUN 15", "high_f": 94, "low_f": 73, "summary": "Storms 30%", "icon": "storm" },
+      { "name": "MON 16", "high_f": 90, "low_f": 71, "summary": "Clear", "icon": "clear" }
+    ],
+    "spc_outlook": { "text": "Slight risk Sat (metro edge)", "category": "slight", "day": 1 },
+    "source": { "name": "NWS FFC, SPC", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:10:00-04:00", "age_seconds": 600, "last_good_at": "2026-06-13T15:10:00-04:00" }
+  },
+  "sources": {
+    "nws":    { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60,  "last_good_at": "2026-06-13T15:19:00-04:00" },
+    "spc":    { "name": "SPC",     "ok": true, "stale": false, "fetched_at": "2026-06-13T15:10:00-04:00", "age_seconds": 600, "last_good_at": "2026-06-13T15:10:00-04:00" },
+    "ga511":  { "name": "511GA",   "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60,  "last_good_at": "2026-06-13T15:19:00-04:00" },
+    "airnow": { "name": "AirNow",  "ok": true, "stale": false, "fetched_at": "2026-06-13T15:00:00-04:00", "age_seconds": 1200, "last_good_at": "2026-06-13T15:00:00-04:00" }
+  }
+}

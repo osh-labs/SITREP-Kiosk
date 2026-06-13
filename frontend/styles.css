@@ -1,0 +1,670 @@
+/* =====================================================================
+   Field SITREP Board — styles.css
+   High-contrast, large-type, cross-room legibility (PRD NFR-7).
+   Hazard severity conveyed by BOTH color AND shape/icon/label text.
+   No external CDN, no web fonts, no network dependencies.
+   System font stack only. No build step.
+   ===================================================================== */
+
+/* ── Reset & base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Palette — dark background for TV / kiosk legibility */
+  --bg:          #0d0f14;
+  --bg-card:     #161a23;
+  --bg-elevated: #1e2433;
+  --text-primary:   #f0f2f7;
+  --text-secondary: #9ca3b0;
+  --text-muted:     #6b7280;
+  --border:      #2a3040;
+  --accent:      #3b82f6;   /* blue — neutral accent, structural only */
+
+  /* Severity — color + supplemental label/icon always used together */
+  --sev-info-bg:     #1e2d40;
+  --sev-info-text:   #60b0f0;
+  --sev-info-border: #2a5080;
+
+  --sev-watch-bg:     #1e2a1e;
+  --sev-watch-text:   #4ade80;
+  --sev-watch-border: #166534;
+
+  --sev-advisory-bg:     #2a2518;
+  --sev-advisory-text:   #fbbf24;
+  --sev-advisory-border: #92400e;
+
+  --sev-caution-bg:     #2a1f10;
+  --sev-caution-text:   #fb923c;
+  --sev-caution-border: #9a3412;
+
+  --sev-danger-bg:     #2a1010;
+  --sev-danger-text:   #f87171;
+  --sev-danger-border: #991b1b;
+
+  --sev-extreme-bg:     #200a28;
+  --sev-extreme-text:   #e879f9;
+  --sev-extreme-border: #7e22ce;
+
+  /* Degraded state */
+  --degraded-bg:     #1f1a0a;
+  --degraded-text:   #fde68a;
+  --degraded-border: #78350f;
+
+  /* Typography scale — generous for across-room reading */
+  --fs-xs:   1.0rem;   /* 16px base */
+  --fs-sm:   1.2rem;
+  --fs-base: 1.5rem;
+  --fs-lg:   2.0rem;
+  --fs-xl:   2.6rem;
+  --fs-2xl:  3.4rem;
+  --fs-3xl:  4.4rem;
+
+  --lh-tight:  1.2;
+  --lh-normal: 1.4;
+  --lh-loose:  1.6;
+
+  --radius:  8px;
+  --radius-lg: 14px;
+
+  --transition-slide: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+               Arial, "Liberation Sans", sans-serif;
+  font-size: 16px;
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Kiosk shell ────────────────────────────────────────────────────── */
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Global header ──────────────────────────────────────────────────── */
+#global-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 2rem;
+  background: var(--bg-elevated);
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+  min-height: 3.5rem;
+  gap: 1rem;
+}
+
+#header-location {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+#header-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 99px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+#header-mode-badge.morning {
+  background: #1c2a3a;
+  color: #60b0f0;
+  border: 1px solid #2a5080;
+}
+#header-mode-badge.afternoon {
+  background: #2a2518;
+  color: #fbbf24;
+  border: 1px solid #92400e;
+}
+
+#header-datetime {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Status / reconnecting indicator */
+#status-bar {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 1.5rem;
+  background: #2a1f10;
+  border-bottom: 2px solid var(--sev-advisory-border);
+  font-size: var(--fs-sm);
+  color: var(--sev-advisory-text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+#status-bar.visible { display: flex; }
+
+/* ── Carousel wrapper ───────────────────────────────────────────────── */
+#carousel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Slides ─────────────────────────────────────────────────────────── */
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-slide);
+  /* no translate — simple fade keeps it rock-solid on low-end GPU */
+}
+.slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.slide.exiting {
+  opacity: 0;
+}
+
+/* Slide inner layout */
+.slide-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem 2.5rem 0 2.5rem;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+/* Slide title bar */
+.slide-title-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-shrink: 0;
+  border-bottom: 3px solid var(--accent);
+  padding-bottom: 0.6rem;
+}
+.slide-title {
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: var(--lh-tight);
+}
+.slide-subtitle {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Slide body (fills space between title and footer) */
+.slide-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+.slide-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.5rem 0 0.7rem 0;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  gap: 0.6rem;
+  letter-spacing: 0.02em;
+}
+.footer-source { color: var(--text-secondary); }
+.footer-sep { color: var(--border); }
+
+/* ── Progress dots ──────────────────────────────────────────────────── */
+#slide-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  flex-shrink: 0;
+  background: var(--bg);
+}
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s, transform 0.3s;
+}
+.dot.active {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+
+/* ── Severity chips ─────────────────────────────────────────────────── */
+/* Color is supplemental; shape + label text are always present */
+.severity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.8rem;
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-width: 2px;
+  border-style: solid;
+  white-space: nowrap;
+}
+.severity-chip .chip-icon {
+  font-style: normal;
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.sev-info     { background: var(--sev-info-bg);     color: var(--sev-info-text);     border-color: var(--sev-info-border); }
+.sev-watch    { background: var(--sev-watch-bg);    color: var(--sev-watch-text);    border-color: var(--sev-watch-border); }
+.sev-advisory { background: var(--sev-advisory-bg); color: var(--sev-advisory-text); border-color: var(--sev-advisory-border); }
+.sev-caution  { background: var(--sev-caution-bg);  color: var(--sev-caution-text);  border-color: var(--sev-caution-border); }
+.sev-danger   { background: var(--sev-danger-bg);   color: var(--sev-danger-text);   border-color: var(--sev-danger-border); }
+.sev-extreme  { background: var(--sev-extreme-bg);  color: var(--sev-extreme-text);  border-color: var(--sev-extreme-border); }
+
+/* ── Degraded banner ────────────────────────────────────────────────── */
+.degraded-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.8rem 1.2rem;
+  background: var(--degraded-bg);
+  border: 2px solid var(--degraded-border);
+  border-radius: var(--radius);
+  color: var(--degraded-text);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  line-height: var(--lh-loose);
+  flex-shrink: 0;
+}
+.degraded-banner .dg-icon {
+  font-style: normal;
+  font-size: 1.4em;
+  flex-shrink: 0;
+  margin-top: 0.05em;
+}
+.degraded-banner .dg-text { flex: 1; }
+.degraded-banner .dg-note {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: #d4a820;
+  margin-top: 0.2rem;
+}
+
+/* ── Slide 1: Morning Briefing ──────────────────────────────────────── */
+.briefing-bottom-line {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-loose);
+  color: var(--text-primary);
+  font-weight: 400;
+}
+.briefing-label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+.watch-for-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.watch-for-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-normal);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.watch-for-list li::before {
+  content: "▶";
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.1em;
+  font-size: 0.85em;
+}
+
+/* Hazard flag row */
+.hazard-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+.hazard-flag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  border-width: 2px;
+  border-style: solid;
+}
+.hazard-flag .flag-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  font-size: 0.85em;
+  font-weight: 800;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+
+/* ── Slide 2: Weather ───────────────────────────────────────────────── */
+.weather-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.weather-section-label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.weather-temp-primary {
+  font-size: var(--fs-3xl);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+.weather-temp-secondary {
+  font-size: var(--fs-xl);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.weather-detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+}
+.weather-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+}
+.weather-row-label {
+  font-size: var(--fs-base);
+  color: var(--text-muted);
+  font-weight: 600;
+  min-width: 8rem;
+  flex-shrink: 0;
+}
+.weather-row-value {
+  font-size: var(--fs-lg);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.weather-row-value.highlight {
+  color: var(--sev-danger-text);
+}
+.weather-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.9rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+/* AQI callout */
+.aqi-callout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 1.1rem;
+  border-radius: var(--radius);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  border: 2px solid var(--sev-advisory-border);
+  background: var(--sev-advisory-bg);
+  color: var(--sev-advisory-text);
+}
+
+/* ── Slide 3: Disruptions & Alerts ─────────────────────────────────── */
+.disruptions-section-title {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+.event-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.event-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg-card);
+  border-left: 5px solid var(--border);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: var(--fs-lg);
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: var(--lh-normal);
+}
+.event-item.crash    { border-left-color: var(--sev-danger-text); }
+.event-item.incident { border-left-color: var(--sev-caution-text); }
+.event-item.construction { border-left-color: var(--sev-advisory-text); }
+.event-item.congestion   { border-left-color: var(--sev-watch-text); }
+.event-item.alert-extreme  { border-left-color: var(--sev-extreme-text); background: var(--sev-extreme-bg); }
+.event-item.alert-danger   { border-left-color: var(--sev-danger-text);  background: var(--sev-danger-bg); }
+.event-item.alert-caution  { border-left-color: var(--sev-caution-text); background: var(--sev-caution-bg); }
+.event-item.alert-advisory { border-left-color: var(--sev-advisory-text); background: var(--sev-advisory-bg); }
+.event-item.alert-watch    { border-left-color: var(--sev-watch-text);    background: var(--sev-watch-bg); }
+.event-item.alert-info     { border-left-color: var(--sev-info-text);     background: var(--sev-info-bg); }
+.event-icon { flex-shrink: 0; font-style: normal; font-size: 1.1em; line-height: 1; margin-top: 0.1em; }
+.event-text { flex: 1; }
+.event-type-badge {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* No-data placeholder */
+.no-data-placeholder {
+  padding: 1rem;
+  font-size: var(--fs-lg);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Slide 4: 3-Day Look Ahead ──────────────────────────────────────── */
+.forecast-days {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+.forecast-day-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: center;
+}
+.forecast-day-name {
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.forecast-day-icon {
+  width: 4.5rem;
+  height: 4.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.forecast-day-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.forecast-temps {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.forecast-temps .low {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.forecast-day-summary {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.spc-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+/* SPC category colors — color + label always used together */
+.spc-general  { background: #1a1a2e; border: 2px solid #3a3a5c; color: #9ca3b0; }
+.spc-marginal { background: #1a2510; border: 2px solid #4a6a20; color: #86d45e; }
+.spc-slight   { background: #2a2000; border: 2px solid #806000; color: #ffd54f; }
+.spc-enhanced { background: #1e1000; border: 2px solid #7a3000; color: #ff9843; }
+.spc-moderate { background: #200000; border: 2px solid #7a0000; color: #ff6060; }
+.spc-high     { background: #10001e; border: 2px solid #5a0060; color: #e879f9; }
+
+/* ── Slide 5: PM Commute ────────────────────────────────────────────── */
+.commute-now-row {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+}
+.commute-temp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.commute-summary-block {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ── Utility ─────────────────────────────────────────────────────────── */
+.em-dash { color: var(--text-muted); }
+.null-val::after { content: "—"; color: var(--text-muted); }
+
+/* Loading screen */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1.2rem;
+  z-index: 999;
+}
+#loading-screen.hidden { display: none; }
+.loading-text {
+  font-size: var(--fs-xl);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Error screen */
+#error-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 998;
+}
+#error-screen.visible { display: flex; }
+.error-icon { font-size: 5rem; font-style: normal; }
+.error-title { font-size: var(--fs-xl); font-weight: 700; color: var(--sev-danger-text); }
+.error-detail { font-size: var(--fs-base); color: var(--text-secondary); text-align: center; }

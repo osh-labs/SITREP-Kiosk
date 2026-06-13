@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Field SITREP Board — United Consulting situational awareness kiosk">
+  <title>Field SITREP Board</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Loading screen shown until first data arrives -->
+  <div id="loading-screen" role="status" aria-live="polite">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <div class="loading-text">Loading SITREP&hellip;</div>
+  </div>
+
+  <!-- Fatal-error screen (shown only on first-load failure with no cached state) -->
+  <div id="error-screen" role="alert" aria-live="assertive">
+    <span class="error-icon" aria-hidden="true">&#9888;</span>
+    <div class="error-title">Unable to load board data</div>
+    <div class="error-detail" id="error-detail">Check network connection and backend service.</div>
+  </div>
+
+  <!-- Main kiosk shell -->
+  <div id="app" aria-label="Field SITREP Board">
+
+    <!-- Persistent header: location + mode + clock -->
+    <header id="global-header" aria-label="Board header">
+      <div id="header-location" aria-label="Location"></div>
+      <div id="header-mode-badge" aria-label="Display mode"></div>
+      <div id="header-datetime" aria-label="Current date and time" aria-live="off"></div>
+    </header>
+
+    <!-- Reconnecting / stale-fetch indicator -->
+    <div id="status-bar" role="status" aria-live="polite">
+      <span aria-hidden="true">&#9679;</span>
+      <span id="status-text">Reconnecting&hellip;</span>
+    </div>
+
+    <!-- Slide carousel -->
+    <main id="carousel" aria-label="Slide carousel" aria-live="off">
+      <!-- Slides are injected here by app.js -->
+    </main>
+
+    <!-- Progress dots -->
+    <nav id="slide-dots" aria-label="Slide position indicator" aria-live="off">
+      <!-- Dots injected by app.js -->
+    </nav>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

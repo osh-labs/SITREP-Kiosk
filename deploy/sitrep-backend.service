@@ -1,0 +1,89 @@
+# =============================================================================
+# sitrep-backend.service — systemd unit for the Field SITREP Board backend
+#
+# ASSUMPTIONS (must match actual backend layout — update before deploying):
+#
+#   BACKEND ENTRYPOINT ASSUMPTION:
+#     The unit runs:  __VENV_DIR__/bin/python -m backend.sitrep
+#     from WorkingDirectory = __INSTALL_DIR__ (the repo root).
+#     If the backend agent settles on a different entrypoint (e.g.
+#     "python -m sitrep" run from the backend/ subdirectory, or
+#     "uvicorn backend.sitrep.main:app"), change the ExecStart line here
+#     AND update install.sh accordingly.  The comment block in install.sh
+#     repeats this assumption.
+#
+#   VENV PATH ASSUMPTION:
+#     Virtual environment lives at __INSTALL_DIR__/.venv
+#     (set by install.sh; adjust __VENV_DIR__ substitution there).
+#
+# PLACEHOLDERS — filled automatically by install.sh:
+#   __INSTALL_DIR__   Absolute path to the repo root  (e.g. /opt/sitrep)
+#   __KIOSK_USER__    Non-root OS user that runs the kiosk  (e.g. kiosk)
+#   __VENV_DIR__      Absolute path to the venv  (e.g. /opt/sitrep/.venv)
+#
+# Do NOT edit the placeholders by hand; run install.sh instead.
+# =============================================================================
+
+[Unit]
+Description=Field SITREP Board — backend ingestion and API server
+Documentation=file:__INSTALL_DIR__/docs/PRD.md
+# Wait for a network stack; we need to reach api.weather.gov etc.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# ── Identity ────────────────────────────────────────────────────────────────
+User=__KIOSK_USER__
+Group=__KIOSK_USER__
+
+# ── Working directory ────────────────────────────────────────────────────────
+# Config loader (backend/sitrep/config.py) resolves paths relative to the
+# repo root, so WorkingDirectory MUST be the repo root.
+WorkingDirectory=__INSTALL_DIR__
+
+# ── Secrets / environment ────────────────────────────────────────────────────
+# EnvironmentFile loads KEY=VALUE pairs from .env before ExecStart runs.
+# Lines beginning with # are ignored; no shell expansion occurs.
+EnvironmentFile=__INSTALL_DIR__/.env
+
+# Explicit env vars — override or supplement .env defaults if needed.
+# SITREP_PORT is also in .env.example; setting it here ensures the service
+# always has a value even if .env omits it.
+Environment=SITREP_PORT=8080
+# SITREP_CONFIG is optional; the backend falls back to config/config.yaml
+# automatically when not set.  Uncomment to point at a custom path:
+# Environment=SITREP_CONFIG=__INSTALL_DIR__/config/config.yaml
+
+# ── Launch command ───────────────────────────────────────────────────────────
+# See ENTRYPOINT ASSUMPTION at the top of this file.
+# Uses the venv python so no system-wide install is needed.
+ExecStart=__VENV_DIR__/bin/python -m backend.sitrep
+
+# ── Restart policy (NFR-2: auto-restart on failure) ─────────────────────────
+Restart=always
+# Wait 5 s before first restart; subsequent restarts back off linearly
+# until RestartStopSec (10 min), then stay at that interval.
+RestartSec=5
+RestartSteps=6
+RestartMaxDelaySec=600
+
+# ── Resource limits ─────────────────────────────────────────────────────────
+# Conservative limits for a kiosk mini PC.  Raise if needed.
+LimitNOFILE=4096
+
+# ── Logging ─────────────────────────────────────────────────────────────────
+# Journal captures stdout/stderr automatically.
+# View with:  journalctl -u sitrep-backend -f
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sitrep-backend
+
+# ── Security hardening ───────────────────────────────────────────────────────
+# Uncomment after verifying the backend doesn't need the restricted resources.
+# NoNewPrivileges=yes
+# PrivateTmp=yes
+# ProtectSystem=strict
+# ReadWritePaths=__INSTALL_DIR__
+
+[Install]
+WantedBy=multi-user.target

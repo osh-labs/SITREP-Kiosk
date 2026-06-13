@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-06-13T06:42:00-04:00",
+  "display": { "mode": "morning", "dwell_seconds": 12, "refresh_seconds": 30 },
+  "location": { "name": "Atlanta Metro", "lat": 33.749, "lon": -84.388 },
+  "briefing": {
+    "bottom_line": "Some feeds are stale — treat the figures below as last-known and confirm current conditions before you rely on them. On the most recent good data, heat was the lead hazard with afternoon storms possible.",
+    "watch_for": [
+      "Weather data is ~2 hrs old — verify before heading out",
+      "Heat index was trending into the danger band"
+    ],
+    "source": "template",
+    "generated_at": "2026-06-13T06:42:00-04:00",
+    "sources": ["NWS FFC"]
+  },
+  "hazards": {
+    "ranked": [
+      { "key": "heat_index", "rank": 1, "label": "Heat index trending to danger band (last good)", "severity": "danger" }
+    ],
+    "aqi_callout": null
+  },
+  "weather": {
+    "current": { "temp_f": 74, "feels_like_f": 76, "wind": { "dir": "SW", "speed_mph": 5, "gust_mph": null }, "summary": "Last known" },
+    "today": { "high_f": 96, "low_f": 75, "heat_index_f": 104, "pop_pct": 40, "pop_window": "after 2 PM", "daylight_until": "20:51", "summary": "PM storms (last known)" },
+    "source": { "name": "NWS FFC", "ok": true, "stale": true, "fetched_at": "2026-06-13T04:55:00-04:00", "age_seconds": 6420, "last_good_at": "2026-06-13T04:55:00-04:00" }
+  },
+  "commute": {
+    "current": { "temp_f": null, "feels_like_f": null, "summary": null },
+    "traffic": [],
+    "source": { "name": "NWS, 511GA", "ok": false, "stale": true, "fetched_at": null, "age_seconds": null, "last_good_at": null }
+  },
+  "disruptions": {
+    "traffic": [],
+    "alerts": [
+      { "text": "Heat Advisory — metro-wide, until 8 PM", "event": "Heat Advisory", "severity": "advisory" }
+    ],
+    "source": { "name": "511GA, NWS", "ok": false, "stale": true, "fetched_at": "2026-06-13T05:10:00-04:00", "age_seconds": 5520, "last_good_at": "2026-06-13T05:10:00-04:00" }
+  },
+  "forecast_3day": {
+    "days": [
+      { "name": "SAT 14", "high_f": 97, "low_f": 75, "summary": "Storms 50%", "icon": "storm" },
+      { "name": "SUN 15", "high_f": 94, "low_f": 73, "summary": "Storms 30%", "icon": "storm" },
+      { "name": "MON 16", "high_f": 90, "low_f": 71, "summary": "Clear", "icon": "clear" }
+    ],
+    "spc_outlook": null,
+    "source": { "name": "NWS FFC, SPC", "ok": true, "stale": true, "fetched_at": "2026-06-13T04:55:00-04:00", "age_seconds": 6420, "last_good_at": "2026-06-13T04:55:00-04:00" }
+  },
+  "sources": {
+    "nws":    { "name": "NWS FFC", "ok": true,  "stale": true,  "fetched_at": "2026-06-13T04:55:00-04:00", "age_seconds": 6420, "last_good_at": "2026-06-13T04:55:00-04:00" },
+    "spc":    { "name": "SPC",     "ok": false, "stale": true,  "fetched_at": null, "age_seconds": null, "last_good_at": null },
+    "ga511":  { "name": "511GA",   "ok": false, "stale": true,  "fetched_at": "2026-06-13T05:10:00-04:00", "age_seconds": 5520, "last_good_at": "2026-06-13T05:10:00-04:00" },
+    "airnow": { "name": "AirNow",  "ok": false, "stale": true,  "fetched_at": null, "age_seconds": null, "last_good_at": null }
+  }
+}
