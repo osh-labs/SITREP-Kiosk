@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 104 92" role="img" aria-label="United Consulting">
+  <!-- United Consulting mark — reconstructed as vector for crisp kiosk rendering.
+       Replace this file with the official logo asset to use the exact artwork. -->
+  <g fill="#1565C0">
+    <!-- Peak / chevron (top of the "A") -->
+    <polygon points="52,6 88,80 68,80 52,42 36,80 16,80" />
+    <!-- Detached parallelogram foot (lower-left accent) -->
+    <polygon points="40,84 72,84 64,92 32,92" />
+  </g>
+</svg>

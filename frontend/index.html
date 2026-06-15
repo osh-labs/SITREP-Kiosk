@@ -24,11 +24,22 @@
   <!-- Main kiosk shell -->
   <div id="app" aria-label="Field SITREP Board">
 
-    <!-- Persistent header: location + mode + clock -->
+    <!-- Persistent header: brand + location + mode + clock -->
     <header id="global-header" aria-label="Board header">
-      <div id="header-location" aria-label="Location"></div>
-      <div id="header-mode-badge" aria-label="Display mode"></div>
-      <div id="header-datetime" aria-label="Current date and time" aria-live="off"></div>
+      <div class="header-left">
+        <div id="brand">
+          <img id="brand-mark" src="assets/united-consulting-mark.svg" alt="United Consulting logo">
+          <div id="brand-wordmark" aria-label="United Consulting">
+            <span class="bw-line">UNITED</span>
+            <span class="bw-line">CONSULTING</span>
+          </div>
+        </div>
+        <div id="header-location" aria-label="Location"></div>
+      </div>
+      <div class="header-right">
+        <div id="header-mode-badge" aria-label="Display mode"></div>
+        <div id="header-datetime" aria-label="Current date and time" aria-live="off"></div>
+      </div>
     </header>
 
     <!-- Reconnecting / stale-fetch indicator -->
