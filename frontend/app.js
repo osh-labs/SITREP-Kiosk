@@ -339,14 +339,21 @@ function buildWeatherSlide(state) {
     bodyHtml += `<p class="no-data-placeholder">Last known values shown below.</p>`;
   }
 
-  /* Current conditions column */
+  /* Icons derived from each section's conditions summary */
+  const nowIcon   = WEATHER_ICONS[weatherIconKey(cur.summary)] || WEATHER_ICONS.unknown;
+  const todayIcon = WEATHER_ICONS[weatherIconKey(tod.summary)] || WEATHER_ICONS.unknown;
+
+  /* Current conditions card */
   const wind = cur.wind || {};
   const windStr = wind.speed_mph != null
     ? `${esc(wind.dir || '')} ${val(wind.speed_mph, ' mph')}${wind.gust_mph != null ? ', gusts ' + val(wind.gust_mph, ' mph') : ''}`
     : '&mdash;';
 
-  const curCol = `<div>
-    <div class="weather-section-label">Now</div>
+  const curCol = `<div class="weather-card">
+    <div class="weather-card-head">
+      <div class="weather-section-label">Now</div>
+      <div class="weather-card-icon" aria-hidden="true">${nowIcon}</div>
+    </div>
     <div class="weather-temp-primary">${val(cur.temp_f, '°F')}</div>
     <div class="weather-temp-secondary">feels ${val(cur.feels_like_f, '°F')}</div>
     <div class="weather-detail-rows">
@@ -354,13 +361,11 @@ function buildWeatherSlide(state) {
         <span class="weather-row-label">Wind</span>
         <span class="weather-row-value">${windStr}</span>
       </div>
-      ${cur.summary ? `<div class="weather-summary-pill" aria-label="Conditions: ${esc(cur.summary)}">
-        ${esc(cur.summary)}
-      </div>` : ''}
     </div>
+    ${cur.summary ? `<div class="weather-card-summary">${esc(cur.summary)}</div>` : ''}
   </div>`;
 
-  /* Today's outlook column */
+  /* Today's outlook card */
   const hiloHtml = `H ${val(tod.high_f, '°F')} / L ${val(tod.low_f, '°F')}`;
   const heatIdxHtml = tod.heat_index_f != null
     ? `<div class="weather-row">
@@ -381,15 +386,18 @@ function buildWeatherSlide(state) {
        </div>`
     : '';
 
-  const todayCol = `<div>
-    <div class="weather-section-label">Today</div>
-    <div class="weather-temp-secondary">${hiloHtml}</div>
+  const todayCol = `<div class="weather-card">
+    <div class="weather-card-head">
+      <div class="weather-section-label">Today</div>
+      <div class="weather-card-icon" aria-hidden="true">${todayIcon}</div>
+    </div>
+    <div class="weather-hilo">${hiloHtml}</div>
     <div class="weather-detail-rows">
       ${heatIdxHtml}
       ${popHtml}
       ${daylightHtml}
-      ${tod.summary ? `<div class="weather-summary-pill">${esc(tod.summary)}</div>` : ''}
     </div>
+    ${tod.summary ? `<div class="weather-card-summary">${esc(tod.summary)}</div>` : ''}
   </div>`;
 
   bodyHtml += `<div class="weather-grid">${curCol}${todayCol}</div>`;
