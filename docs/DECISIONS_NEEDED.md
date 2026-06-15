@@ -26,11 +26,11 @@ appended from the sub-agents' findings._
 - [ ] **Location** — currently generic Atlanta metro single point (lat 33.749, lon -84.388) per A1/O1. Site/route geofencing is explicitly v2; confirm the single point is right, or give preferred coordinates.
 
 ## 4. Presentation choices (defaults chosen; change if you have preferences)
-- [x] **Branding** — United Consulting logo added to the header. NOTE: the logo
-  file wasn't recoverable from the upload, so the mark is a **vector reconstruction**
-  at `frontend/assets/united-consulting-mark.svg`. To use the exact official
-  artwork, replace that one file (SVG or PNG; if PNG, update the `src` in
-  `frontend/index.html`). Brand blue is the `--brand-blue` CSS variable in `styles.css`.
+- [x] **Branding** — Real United Consulting logo (`frontend/assets/uc-logo.svg`,
+  top-left) and ZeroHarm safety-program logo (`frontend/assets/zeroharm-logo.svg`,
+  top-right) are installed; date/time is centered in the top bar. The board is now
+  **light mode** (clean, high-contrast, modern sans-serif). Brand blue is the real
+  UC blue (#007BC3) via the `--brand-blue` / `--accent` CSS variables.
 - [ ] **Mode switch time** — defaults to morning until 12:00, afternoon after (config `display.mode_windows`). Adjust to your muster schedule.
 - [ ] **Dwell time** — 12s per slide (config `display.dwell_seconds`).
 

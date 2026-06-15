@@ -41,8 +41,8 @@ const WEATHER_ICONS = {
     <polygon points="22,28 18,36 23,33 19,42 28,31 23,34" fill="#fbbf24"/>
   </svg>`,
   clear: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <circle cx="24" cy="24" r="9" fill="#fbbf24"/>
-    <g stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round">
+    <circle cx="24" cy="24" r="9" fill="#f0920e"/>
+    <g stroke="#f0920e" stroke-width="2.5" stroke-linecap="round">
       <line x1="24" y1="6" x2="24" y2="11"/>
       <line x1="24" y1="37" x2="24" y2="42"/>
       <line x1="6" y1="24" x2="11" y2="24"/>
@@ -56,7 +56,7 @@ const WEATHER_ICONS = {
   rain: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
     <ellipse cx="24" cy="18" rx="13" ry="9" fill="#4a5568"/>
     <ellipse cx="17" cy="21" rx="8" ry="6" fill="#6b7280"/>
-    <g stroke="#60b0f0" stroke-width="2" stroke-linecap="round">
+    <g stroke="#2c7be5" stroke-width="2" stroke-linecap="round">
       <line x1="17" y1="30" x2="15" y2="38"/>
       <line x1="24" y1="30" x2="22" y2="38"/>
       <line x1="31" y1="30" x2="29" y2="38"/>
@@ -68,8 +68,8 @@ const WEATHER_ICONS = {
     <ellipse cx="32" cy="26" rx="7" ry="5" fill="#6b7280"/>
   </svg>`,
   snow: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <ellipse cx="24" cy="18" rx="13" ry="9" fill="#9ca3af"/>
-    <g stroke="#e5e7eb" stroke-width="2" stroke-linecap="round">
+    <ellipse cx="24" cy="18" rx="13" ry="9" fill="#6b7280"/>
+    <g stroke="#2c7be5" stroke-width="2" stroke-linecap="round">
       <line x1="16" y1="30" x2="16" y2="38"/>
       <line x1="12" y1="34" x2="20" y2="34"/>
       <line x1="24" y1="30" x2="24" y2="38"/>
@@ -79,7 +79,7 @@ const WEATHER_ICONS = {
     </g>
   </svg>`,
   wind: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <g stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round">
+    <g stroke="#51606e" stroke-width="2.5" stroke-linecap="round">
       <path d="M8 18 Q28 14 36 18 Q42 21 38 24 Q34 27 30 22" fill="none"/>
       <path d="M8 24 Q24 21 32 24" fill="none"/>
       <path d="M8 30 Q20 27 28 30 Q34 33 30 36 Q27 38 24 34" fill="none"/>

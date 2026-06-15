@@ -24,21 +24,20 @@
   <!-- Main kiosk shell -->
   <div id="app" aria-label="Field SITREP Board">
 
-    <!-- Persistent header: brand + location + mode + clock -->
+    <!-- Persistent header: UC logo (left) · date/time + context (center) · ZeroHarm (right) -->
     <header id="global-header" aria-label="Board header">
-      <div class="header-left">
-        <div id="brand">
-          <img id="brand-mark" src="assets/united-consulting-mark.svg" alt="United Consulting logo">
-          <div id="brand-wordmark" aria-label="United Consulting">
-            <span class="bw-line">UNITED</span>
-            <span class="bw-line">CONSULTING</span>
-          </div>
-        </div>
-        <div id="header-location" aria-label="Location"></div>
+      <div class="header-zone header-left">
+        <img class="brand-logo" id="brand-uc" src="assets/uc-logo.svg" alt="United Consulting">
       </div>
-      <div class="header-right">
-        <div id="header-mode-badge" aria-label="Display mode"></div>
+      <div class="header-zone header-center">
         <div id="header-datetime" aria-label="Current date and time" aria-live="off"></div>
+        <div class="header-meta">
+          <span id="header-location" aria-label="Location"></span>
+          <span id="header-mode-badge" aria-label="Display mode"></span>
+        </div>
+      </div>
+      <div class="header-zone header-right">
+        <img class="brand-logo" id="brand-zeroharm" src="assets/zeroharm-logo.svg" alt="ZeroHarm safety program">
       </div>
     </header>
 
