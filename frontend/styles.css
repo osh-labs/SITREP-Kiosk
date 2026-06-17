@@ -174,8 +174,10 @@ html, body {
 }
 .dash-col { display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; overflow: hidden; }
 .dash-col-center { overflow: hidden; }
-/* Afternoon: promote the PM-commute card to the top of the left column */
-.mode-afternoon #card-activity { order: -1; }
+/* Afternoon: the left column is PM Commute (60%) over Briefing (40%) so traffic
+   gets the room. (flex-basis 0 + grow ratio splits the column height.) */
+.mode-afternoon .dash-col-left > #card-activity { flex: 3 1 0; }
+.mode-afternoon .dash-col-left > #card-summary  { flex: 2 1 0; }
 
 /* ── Cards ──────────────────────────────────────────────────────────── */
 .card {

@@ -305,6 +305,33 @@ function renderHeader(state) {
   $modeBadge.textContent = mode === 'afternoon' ? 'Afternoon' : 'Morning';
   $app.classList.toggle('mode-morning', mode !== 'afternoon');
   $app.classList.toggle('mode-afternoon', mode === 'afternoon');
+  applyModeLayout(mode);
+}
+
+/**
+ * Place the Hazards and activity (Disruptions/PM Commute) cards into columns by
+ * mode. Morning: Hazards leads the left column, Disruptions sits in the right.
+ * Afternoon: they switch — PM Commute leads the left column (with more room for
+ * traffic, 60/40 vs. Briefing via CSS), Hazards moves to the right.
+ * Reparenting moves the existing nodes; the map and other cards are untouched.
+ */
+function applyModeLayout(mode) {
+  const left = document.querySelector('.dash-col-left');
+  const right = document.querySelector('.dash-col-right');
+  if (!left || !right) return;
+  if (mode === 'afternoon') {
+    left.appendChild($activity);
+    left.appendChild($summary);
+    right.appendChild($chartTemp);
+    right.appendChild($hazards);
+    right.appendChild($forecast);
+  } else {
+    left.appendChild($hazards);
+    left.appendChild($summary);
+    right.appendChild($chartTemp);
+    right.appendChild($activity);
+    right.appendChild($forecast);
+  }
 }
 
 function renderOverallRisk(state) {
