@@ -28,6 +28,7 @@ from .sources import nws as nws_source
 from .sources import spc as spc_source
 from .sources import ga511 as ga511_source
 from .sources import airnow as airnow_source
+from .sources import openmeteo as openmeteo_source
 
 log = logging.getLogger(__name__)
 
@@ -87,12 +88,17 @@ def _poll_nws() -> None:
         data = nws_source.fetch(client, cfg)
         if data.get("_ok"):
             cache.update("nws", data)
+            # The map's authoritative overlay (alert GeoJSON) rides on NWS;
+            # mark the weather_map source fresh whenever NWS succeeds.
+            cache.update("weather_map", {"_ok": True})
             log.info("NWS poll OK")
         else:
             cache.mark_failed("nws")
+            cache.mark_failed("weather_map")
             log.warning("NWS poll returned not-ok")
     except Exception as exc:
         cache.mark_failed("nws")
+        cache.mark_failed("weather_map")
         log.error("NWS poll exception: %s", exc)
 
 
@@ -147,6 +153,23 @@ def _poll_airnow() -> None:
         log.error("AirNow poll exception: %s", exc)
 
 
+def _poll_openmeteo() -> None:
+    cfg = get_config()
+    cache = get_cache()
+    client = _get_http_client()
+    try:
+        data = openmeteo_source.fetch(client, cfg)
+        if data.get("_ok"):
+            cache.update("openmeteo", data)
+            log.info("Open-Meteo poll OK (%d hourly points)", len(data.get("hourly", [])))
+        else:
+            cache.mark_failed("openmeteo")
+            log.warning("Open-Meteo poll returned not-ok")
+    except Exception as exc:
+        cache.mark_failed("openmeteo")
+        log.error("Open-Meteo poll exception: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # State + briefing rebuild
 # ---------------------------------------------------------------------------
@@ -167,6 +190,7 @@ def _rebuild_state(force_briefing: bool = False) -> None:
     spc_data = cache.get_data("spc")
     ga511_data = cache.get_data("ga511")
     airnow_data = cache.get_data("airnow")
+    openmeteo_data = cache.get_data("openmeteo")
 
     # Compute hazards
     hazards = hazards_module.compute_hazards(nws_data, spc_data, airnow_data, cfg)
@@ -202,6 +226,8 @@ def _rebuild_state(force_briefing: bool = False) -> None:
             sources_used.append("SPC")
         if cache.get_source_block("ga511").ok:
             sources_used.append("511GA")
+        if cache.get_source_block("openmeteo").ok:
+            sources_used.append("Open-Meteo")
 
         _last_briefing = briefing_module.generate_briefing(
             ranked_hazards=ranked_list,
@@ -224,6 +250,7 @@ def _rebuild_state(force_briefing: bool = False) -> None:
         briefing=_last_briefing,
         cache=cache,
         config=cfg,
+        openmeteo_data=openmeteo_data,
     )
     cache.set_state(state.to_dict())
     log.debug("Consolidated state rebuilt")
@@ -235,6 +262,7 @@ def _full_poll_cycle() -> None:
     _poll_spc()
     _poll_ga511()
     _poll_airnow()
+    _poll_openmeteo()
     _rebuild_state(force_briefing=True)
 
 
@@ -293,6 +321,15 @@ def start_scheduler() -> BackgroundScheduler:
         trigger=IntervalTrigger(seconds=ps.get("airnow", 1800)),
         id="poll_airnow",
         name="AirNow poller",
+        replace_existing=True,
+        coalesce=True,
+        misfire_grace_time=120,
+    )
+    _scheduler.add_job(
+        _poll_openmeteo,
+        trigger=IntervalTrigger(seconds=ps.get("openmeteo", 900)),
+        id="poll_openmeteo",
+        name="Open-Meteo poller",
         replace_existing=True,
         coalesce=True,
         misfire_grace_time=120,

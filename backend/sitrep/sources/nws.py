@@ -162,6 +162,7 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         "weather_today": None,
         "forecast_days": [],
         "alerts": [],
+        "alerts_geojson": {"type": "FeatureCollection", "features": []},
         "raw_hourly": [],
         "_ok": False,
     }
@@ -324,6 +325,10 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         r = client.get(alerts_url, headers=_headers(), timeout=10)
         r.raise_for_status()
         features = r.json().get("features", [])
+        # Keep only features that carry polygon geometry for the map overlay.
+        # (Watches without geometry render as a banner in the frontend, not a shape.)
+        geo_features = [f for f in features if f.get("geometry")]
+        result["alerts_geojson"] = {"type": "FeatureCollection", "features": geo_features}
         alerts = []
         for f in features:
             props = f.get("properties", {})

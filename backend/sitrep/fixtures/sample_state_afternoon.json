@@ -1,57 +1,357 @@
 {
   "generated_at": "2026-06-13T15:20:00-04:00",
-  "display": { "mode": "afternoon", "dwell_seconds": 12, "refresh_seconds": 30 },
-  "location": { "name": "Atlanta Metro", "lat": 33.749, "lon": -84.388 },
+  "display": {
+    "mode": "afternoon",
+    "dwell_seconds": 12,
+    "refresh_seconds": 30
+  },
+  "location": {
+    "name": "Atlanta Metro",
+    "lat": 33.749,
+    "lon": -84.388
+  },
   "briefing": {
     "bottom_line": "Storms taper through the evening commute; roads stay wet and air quality remains Code Orange. Allow extra time on the drive and watch standing water on the interstates.",
     "watch_for": [
-      "Storms ending ~6 PM — wet roads, reduced visibility",
-      "Air quality Code Orange — sensitive crew pace down"
+      "Storms ending ~6 PM \u2014 wet roads, reduced visibility",
+      "Air quality Code Orange \u2014 sensitive crew pace down"
     ],
     "source": "model",
     "generated_at": "2026-06-13T15:18:00-04:00",
-    "sources": ["NWS FFC", "511GA"]
+    "sources": [
+      "NWS FFC",
+      "511GA"
+    ]
   },
   "hazards": {
     "ranked": [
-      { "key": "thunderstorms", "rank": 1, "label": "Storms ending ~6 PM", "severity": "watch" }
+      {
+        "key": "thunderstorms",
+        "rank": 1,
+        "label": "Storms ending ~6 PM",
+        "severity": "watch"
+      }
     ],
-    "aqi_callout": { "aqi": 103, "category": "Unhealthy for Sensitive Groups", "label": "Code Orange" }
+    "aqi_callout": {
+      "aqi": 103,
+      "category": "Unhealthy for Sensitive Groups",
+      "label": "Code Orange"
+    }
   },
   "weather": {
-    "current": { "temp_f": 91, "feels_like_f": 99, "wind": { "dir": "W", "speed_mph": 8, "gust_mph": 18 }, "summary": "Showers" },
-    "today": { "high_f": 96, "low_f": 75, "heat_index_f": 101, "pop_pct": 60, "pop_window": "until 6 PM", "daylight_until": "20:51", "summary": "Storms tapering" },
-    "source": { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T15:19:00-04:00" }
+    "current": {
+      "temp_f": 91,
+      "feels_like_f": 99,
+      "wind": {
+        "dir": "W",
+        "speed_mph": 8,
+        "gust_mph": 18
+      },
+      "summary": "Showers"
+    },
+    "today": {
+      "high_f": 96,
+      "low_f": 75,
+      "heat_index_f": 101,
+      "pop_pct": 60,
+      "pop_window": "until 6 PM",
+      "daylight_until": "20:51",
+      "summary": "Storms tapering",
+      "sunrise": "2026-06-13T06:27",
+      "sunset": "2026-06-13T20:51",
+      "uv_index": 6.0,
+      "visibility_mi": 7.0
+    },
+    "source": {
+      "name": "NWS FFC",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    },
+    "hourly": [
+      {
+        "time": "2026-06-13T14:00",
+        "temp_f": 93.0,
+        "feels_like_f": 105.0,
+        "wind_mph": 6,
+        "gust_mph": 13,
+        "pop_pct": 10,
+        "precip_in": 0
+      },
+      {
+        "time": "2026-06-13T15:00",
+        "temp_f": 91.7,
+        "feels_like_f": 103.7,
+        "wind_mph": 7,
+        "gust_mph": 15,
+        "pop_pct": 10,
+        "precip_in": 0
+      },
+      {
+        "time": "2026-06-13T16:00",
+        "temp_f": 90.4,
+        "feels_like_f": 102.4,
+        "wind_mph": 8,
+        "gust_mph": 17,
+        "pop_pct": 20,
+        "precip_in": 0
+      },
+      {
+        "time": "2026-06-13T17:00",
+        "temp_f": 89.1,
+        "feels_like_f": 101.1,
+        "wind_mph": 9,
+        "gust_mph": 19,
+        "pop_pct": 30,
+        "precip_in": 0
+      },
+      {
+        "time": "2026-06-13T18:00",
+        "temp_f": 87.8,
+        "feels_like_f": 99.8,
+        "wind_mph": 10,
+        "gust_mph": 17,
+        "pop_pct": 40,
+        "precip_in": 0.01
+      },
+      {
+        "time": "2026-06-13T19:00",
+        "temp_f": 86.5,
+        "feels_like_f": 98.5,
+        "wind_mph": 6,
+        "gust_mph": 14,
+        "pop_pct": 50,
+        "precip_in": 0.05
+      },
+      {
+        "time": "2026-06-13T20:00",
+        "temp_f": 85.2,
+        "feels_like_f": 97.2,
+        "wind_mph": 7,
+        "gust_mph": 16,
+        "pop_pct": 60,
+        "precip_in": 0.12
+      },
+      {
+        "time": "2026-06-13T21:00",
+        "temp_f": 83.9,
+        "feels_like_f": 91.9,
+        "wind_mph": 8,
+        "gust_mph": 18,
+        "pop_pct": 50,
+        "precip_in": 0.08
+      },
+      {
+        "time": "2026-06-13T22:00",
+        "temp_f": 82.6,
+        "feels_like_f": 90.6,
+        "wind_mph": 9,
+        "gust_mph": 16,
+        "pop_pct": 40,
+        "precip_in": 0.03
+      },
+      {
+        "time": "2026-06-13T23:00",
+        "temp_f": 81.3,
+        "feels_like_f": 89.3,
+        "wind_mph": 10,
+        "gust_mph": 18,
+        "pop_pct": 30,
+        "precip_in": 0.01
+      },
+      {
+        "time": "2026-06-13T00:00",
+        "temp_f": 80.0,
+        "feels_like_f": 88.0,
+        "wind_mph": 6,
+        "gust_mph": 15,
+        "pop_pct": 20,
+        "precip_in": 0
+      },
+      {
+        "time": "2026-06-13T01:00",
+        "temp_f": 78.7,
+        "feels_like_f": 86.7,
+        "wind_mph": 7,
+        "gust_mph": 17,
+        "pop_pct": 20,
+        "precip_in": 0
+      }
+    ]
   },
   "commute": {
-    "current": { "temp_f": 91, "feels_like_f": 99, "summary": "Storms ending ~6 PM" },
+    "current": {
+      "temp_f": 91,
+      "feels_like_f": 99,
+      "summary": "Storms ending ~6 PM"
+    },
     "traffic": [
-      { "text": "I-20 EB — heavy, about +18 min", "type": "congestion" },
-      { "text": "GA-400 SB — incident @ Northridge", "type": "incident" }
+      {
+        "text": "I-20 EB \u2014 heavy, about +18 min",
+        "type": "congestion"
+      },
+      {
+        "text": "GA-400 SB \u2014 incident @ Northridge",
+        "type": "incident"
+      }
     ],
-    "source": { "name": "NWS, 511GA", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T15:19:00-04:00" }
+    "source": {
+      "name": "NWS, 511GA",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    }
   },
   "disruptions": {
     "traffic": [
-      { "text": "I-20 EB — heavy, about +18 min", "type": "congestion" },
-      { "text": "GA-400 SB — incident @ Northridge", "type": "incident" }
+      {
+        "text": "I-20 EB \u2014 heavy, about +18 min",
+        "type": "congestion"
+      },
+      {
+        "text": "GA-400 SB \u2014 incident @ Northridge",
+        "type": "incident"
+      }
     ],
     "alerts": [],
-    "source": { "name": "511GA, NWS", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T15:19:00-04:00" }
+    "source": {
+      "name": "511GA, NWS",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    }
   },
   "forecast_3day": {
     "days": [
-      { "name": "SAT 14", "high_f": 97, "low_f": 75, "summary": "Storms 50%", "icon": "storm" },
-      { "name": "SUN 15", "high_f": 94, "low_f": 73, "summary": "Storms 30%", "icon": "storm" },
-      { "name": "MON 16", "high_f": 90, "low_f": 71, "summary": "Clear", "icon": "clear" }
+      {
+        "name": "SAT 14",
+        "high_f": 97,
+        "low_f": 75,
+        "summary": "Storms 50%",
+        "icon": "storm"
+      },
+      {
+        "name": "SUN 15",
+        "high_f": 94,
+        "low_f": 73,
+        "summary": "Storms 30%",
+        "icon": "storm"
+      },
+      {
+        "name": "MON 16",
+        "high_f": 90,
+        "low_f": 71,
+        "summary": "Clear",
+        "icon": "clear"
+      }
     ],
-    "spc_outlook": { "text": "Slight risk Sat (metro edge)", "category": "slight", "day": 1 },
-    "source": { "name": "NWS FFC, SPC", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:10:00-04:00", "age_seconds": 600, "last_good_at": "2026-06-13T15:10:00-04:00" }
+    "spc_outlook": {
+      "text": "Slight risk Sat (metro edge)",
+      "category": "slight",
+      "day": 1
+    },
+    "source": {
+      "name": "NWS FFC, SPC",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:10:00-04:00",
+      "age_seconds": 600,
+      "last_good_at": "2026-06-13T15:10:00-04:00"
+    }
   },
   "sources": {
-    "nws":    { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60,  "last_good_at": "2026-06-13T15:19:00-04:00" },
-    "spc":    { "name": "SPC",     "ok": true, "stale": false, "fetched_at": "2026-06-13T15:10:00-04:00", "age_seconds": 600, "last_good_at": "2026-06-13T15:10:00-04:00" },
-    "ga511":  { "name": "511GA",   "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60,  "last_good_at": "2026-06-13T15:19:00-04:00" },
-    "airnow": { "name": "AirNow",  "ok": true, "stale": false, "fetched_at": "2026-06-13T15:00:00-04:00", "age_seconds": 1200, "last_good_at": "2026-06-13T15:00:00-04:00" }
+    "nws": {
+      "name": "NWS FFC",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    },
+    "spc": {
+      "name": "SPC",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:10:00-04:00",
+      "age_seconds": 600,
+      "last_good_at": "2026-06-13T15:10:00-04:00"
+    },
+    "ga511": {
+      "name": "511GA",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    },
+    "airnow": {
+      "name": "AirNow",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:00:00-04:00",
+      "age_seconds": 1200,
+      "last_good_at": "2026-06-13T15:00:00-04:00"
+    },
+    "openmeteo": {
+      "name": "Open-Meteo",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    },
+    "weather_map": {
+      "name": "Weather Map",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    }
+  },
+  "astro": {
+    "moon_phase": "Waxing Gibbous",
+    "illumination_pct": 84,
+    "phase_fraction": 0.39
+  },
+  "weather_map": {
+    "enabled": true,
+    "center": {
+      "lat": 33.749,
+      "lon": -84.388
+    },
+    "default_zoom": 8,
+    "min_zoom": 6,
+    "max_zoom": 10,
+    "base_style": "dark",
+    "layers": {
+      "radar": {
+        "default_on": true,
+        "opacity": 0.7
+      },
+      "alerts": {
+        "default_on": true
+      }
+    },
+    "animation": {
+      "enabled": true,
+      "frames": 8,
+      "interval_ms": 600,
+      "refresh_seconds": 300
+    },
+    "source": {
+      "name": "Weather Map",
+      "ok": true,
+      "stale": false,
+      "fetched_at": "2026-06-13T15:19:00-04:00",
+      "age_seconds": 60,
+      "last_good_at": "2026-06-13T15:19:00-04:00"
+    }
   }
 }

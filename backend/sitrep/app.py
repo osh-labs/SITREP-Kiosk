@@ -148,6 +148,29 @@ def create_app() -> FastAPI:
 
         return JSONResponse(content=state)
 
+    @app.get("/api/alerts.geojson", tags=["data"])
+    async def get_alerts_geojson() -> JSONResponse:
+        """Active NWS alert polygons as GeoJSON, for the map overlay.
+
+        Served from loopback so the authoritative warning shapes never depend on
+        an external fetch at render time. Demo mode serves a static sample.
+        """
+        empty = {"type": "FeatureCollection", "features": []}
+
+        if _demo_mode_active():
+            sample = _FIXTURES_DIR / "sample_alerts.geojson"
+            try:
+                with open(sample) as fh:
+                    return JSONResponse(content=json.load(fh))
+            except Exception:
+                return JSONResponse(content=empty)
+
+        cache = get_cache()
+        nws_data = cache.get_data("nws")
+        if nws_data and nws_data.get("alerts_geojson"):
+            return JSONResponse(content=nws_data["alerts_geojson"])
+        return JSONResponse(content=empty)
+
     # ── Static frontend ───────────────────────────────────────────────────────
     if _FRONTEND_DIR.exists():
         # Mount specific asset paths before the catch-all

@@ -88,8 +88,13 @@ A `source` block:
       "heat_index_f": 104,
       "pop_pct": 40, "pop_window": "after 2 PM",
       "daylight_until": "20:51",
-      "summary": "PM storms"
+      "summary": "PM storms",
+      "sunrise": "2026-06-13T06:27", "sunset": "2026-06-13T20:51",
+      "uv_index": 8.0, "visibility_mi": 9.0
     },
+    "hourly": [
+      { "time": "2026-06-13T07:00", "temp_f": 78.0, "feels_like_f": 82.0, "wind_mph": 6.0, "gust_mph": 13.0, "pop_pct": 10, "precip_in": 0.0 }
+    ],
     "source": { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" }
   },
 
@@ -123,14 +128,45 @@ A `source` block:
     "source": { "name": "NWS FFC, SPC", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:40:00-04:00", "age_seconds": 120, "last_good_at": "2026-06-13T06:40:00-04:00" }
   },
 
+  "astro": { "moon_phase": "Waxing Gibbous", "illumination_pct": 82, "phase_fraction": 0.38 },
+
+  "weather_map": {
+    "enabled": true,
+    "center": { "lat": 33.749, "lon": -84.388 },
+    "default_zoom": 8, "min_zoom": 6, "max_zoom": 10,
+    "base_style": "dark",
+    "layers": { "radar": { "default_on": true, "opacity": 0.7 }, "alerts": { "default_on": true } },
+    "animation": { "enabled": true, "frames": 8, "interval_ms": 600, "refresh_seconds": 300 },
+    "source": { "name": "Weather Map", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" }
+  },
+
   "sources": {
-    "nws":    { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" },
-    "spc":    { "name": "SPC",     "ok": true, "stale": false, "fetched_at": "2026-06-13T06:40:00-04:00", "age_seconds": 120, "last_good_at": "2026-06-13T06:40:00-04:00" },
-    "ga511":  { "name": "511GA",   "ok": true, "stale": false, "fetched_at": "2026-06-13T06:41:00-04:00", "age_seconds": 60,  "last_good_at": "2026-06-13T06:41:00-04:00" },
-    "airnow": { "name": "AirNow",  "ok": true, "stale": false, "fetched_at": "2026-06-13T06:00:00-04:00", "age_seconds": 2520, "last_good_at": "2026-06-13T06:00:00-04:00" }
+    "nws":         { "name": "NWS FFC",    "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" },
+    "spc":         { "name": "SPC",        "ok": true, "stale": false, "fetched_at": "2026-06-13T06:40:00-04:00", "age_seconds": 120, "last_good_at": "2026-06-13T06:40:00-04:00" },
+    "ga511":       { "name": "511GA",      "ok": true, "stale": false, "fetched_at": "2026-06-13T06:41:00-04:00", "age_seconds": 60,  "last_good_at": "2026-06-13T06:41:00-04:00" },
+    "airnow":      { "name": "AirNow",     "ok": true, "stale": false, "fetched_at": "2026-06-13T06:00:00-04:00", "age_seconds": 2520, "last_good_at": "2026-06-13T06:00:00-04:00" },
+    "openmeteo":   { "name": "Open-Meteo", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" },
+    "weather_map": { "name": "Weather Map","ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" }
   }
 }
 ```
+
+## Source bindings (which feed owns which field)
+
+| Field(s) | Source | Authoritative |
+|----------|--------|---------------|
+| `weather.current.*`, `weather.today.high_f/low_f/heat_index_f/pop_pct/pop_window/summary`, `disruptions.alerts` | **NWS FFC** | yes |
+| `weather.hourly[]`, `weather.today.sunrise/sunset/uv_index/visibility_mi` | **Open-Meteo** (`sources.openmeteo`) | supplementary |
+| `disruptions.traffic`, `commute.traffic` | **511GA** | yes |
+| `hazards.aqi_callout` | **AirNow** | yes |
+| `forecast_3day.spc_outlook` | **SPC** | yes |
+| `astro.*` | **computed** (deterministic, no feed) | n/a — exact |
+| `weather_map.*` (config) + alert polygons via `GET /api/alerts.geojson` | config + **NWS** (`sources.weather_map`) | alert shapes authoritative |
+
+> The single dashboard ignores `display.dwell_seconds` (a carousel relic). Map base
+> + radar tiles load directly in the browser from CARTO/IEM — a documented
+> exception to "loopback-only at render time" for non-authoritative imagery; the
+> authoritative warning shapes still come from the loopback `/api/alerts.geojson`.
 
 ## Field notes
 

@@ -1,0 +1,47 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "event": "Heat Advisory",
+        "severity": "advisory",
+        "headline": "Heat Advisory in effect until 8 PM EDT",
+        "areaDesc": "Metro Atlanta"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-84.75, 33.45],
+            [-84.00, 33.45],
+            [-84.00, 34.05],
+            [-84.75, 34.05],
+            [-84.75, 33.45]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "event": "Severe Thunderstorm Watch",
+        "severity": "watch",
+        "headline": "Severe Thunderstorm Watch until 9 PM EDT",
+        "areaDesc": "North Fulton / Forsyth"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-84.40, 34.00],
+            [-84.05, 34.00],
+            [-84.05, 34.25],
+            [-84.40, 34.25],
+            [-84.40, 34.00]
+          ]
+        ]
+      }
+    }
+  ]
+}
