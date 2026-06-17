@@ -217,16 +217,22 @@ fi
 # ── 3. Python virtual environment + dependencies ─────────────────────────────
 step "Setting up Python venv at ${VENV_DIR}"
 
-if [[ ! -f "${VENV_DIR}/bin/python" ]]; then
+# (Re)create the venv if it's missing OR broken (no working pip inside it).
+if [[ ! -x "${VENV_DIR}/bin/python" ]] || ! "${VENV_DIR}/bin/python" -m pip --version &>/dev/null; then
+    info "Creating a fresh virtual environment (with pip)..."
+    rm -rf "${VENV_DIR}"
     "${PYTHON_BIN}" -m venv "${VENV_DIR}"
-    success "Created venv"
+    # Some Python builds don't bootstrap pip during venv creation — ensure it.
+    "${VENV_DIR}/bin/python" -m ensurepip --upgrade &>/dev/null || true
+    success "Created venv with ${PYTHON_BIN}"
 else
-    success "Venv already exists — skipping creation"
+    success "Venv already exists with working pip — skipping creation"
 fi
 
 info "Installing / updating requirements.txt..."
-"${VENV_DIR}/bin/pip" install --quiet --upgrade pip
-"${VENV_DIR}/bin/pip" install --quiet -r "${REPO_ROOT}/requirements.txt"
+# Use 'python -m pip' — robust even if the bin/pip shim is absent.
+"${VENV_DIR}/bin/python" -m pip install --quiet --upgrade pip
+"${VENV_DIR}/bin/python" -m pip install --quiet -r "${REPO_ROOT}/requirements.txt"
 success "Python dependencies installed"
 
 # Fix ownership so the kiosk user can use the venv
