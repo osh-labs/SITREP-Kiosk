@@ -15,38 +15,33 @@
 #                        Default: kiosk
 #
 # WHAT IT DOES (in order):
-#   1. Check prerequisites (Python 3.11+, Chromium or Google Chrome).
-#   2. Create the kiosk OS user if it does not exist.
-#   3. Create a Python virtual environment at ${INSTALL_DIR}/.venv and
-#      pip-install -r requirements.txt.
-#   4. Copy config/config.example.yaml -> config/config.yaml (if absent).
-#   5. Copy .env.example -> .env (if absent), then warn to fill in keys.
-#   6. Substitute placeholders in the systemd unit file, copy it to
-#      /etc/systemd/system/, enable and start the service.
-#   7. Install the desktop autostart entry for the kiosk user.
+#   0b. Install OS packages (Xorg, xinit, Openbox, Chromium, curl, venv).
+#   1.  Check prerequisites (Python 3.11+, Chromium).
+#   2.  Create the kiosk OS user (+ X groups, Xwrapper) if needed.
+#   3.  Create a Python venv at ${INSTALL_DIR}/.venv and pip-install requirements.
+#   4.  Copy config/config.example.yaml -> config/config.yaml (if absent).
+#   5.  Copy .env.example -> .env (if absent), then warn to fill in keys.
+#   6.  Install/enable/start the backend systemd service.
+#   7.  Configure tty1 console auto-login for the kiosk user.
+#   7b. Install the X session (~/.xinitrc -> Openbox -> kiosk.sh) + ~/.bash_profile.
+#
+# DESIGN: minimal X + Openbox kiosk (no desktop environment, no display manager).
+#   Boot -> getty auto-login on tty1 -> ~/.bash_profile runs `startx`
+#        -> ~/.xinitrc starts Openbox + kiosk.sh -> Chromium --kiosk.
+#   This is X11 (not Wayland), so xset screen-blank disabling works directly.
 #
 # ASSUMPTIONS — read before deploying:
 #
 #   BACKEND ENTRYPOINT:
 #     ExecStart uses:  ${INSTALL_DIR}/.venv/bin/python -m backend.sitrep
 #     run from WorkingDirectory=${INSTALL_DIR} (the repo root).
-#     This works when the package layout is backend/sitrep/__init__.py,
-#     which is what the backend agent has built.  If the entrypoint changes
-#     (e.g. to "python -m sitrep" launched from backend/, or a uvicorn call),
-#     update EXEC_START in this script and re-run install.sh.
+#     If the entrypoint changes, update the .service and re-run install.sh.
 #
-#   VENV LOCATION:
-#     ${INSTALL_DIR}/.venv
-#     If you want the venv elsewhere, override VENV_DIR before running.
+#   VENV LOCATION:  ${INSTALL_DIR}/.venv  (override VENV_DIR before running).
 #
 #   DISTRO:
-#     Assumes Debian/Ubuntu.  Package names (chromium, python3.11, etc.) may
-#     differ on Fedora/RHEL/Arch; comments note where differences appear.
-#
-#   DISPLAY MANAGER:
-#     Assumes a GNOME-compatible display manager (LightDM, GDM) that honours
-#     ~/.config/autostart/*.desktop.  On non-GNOME setups you may need to wire
-#     kiosk.sh into the session a different way (see README.md §Autostart).
+#     Targets Ubuntu Server 24.04 (apt). Package names may differ on
+#     Fedora/RHEL/Arch; the script logic is otherwise distro-neutral.
 # =============================================================================
 
 set -euo pipefail
@@ -100,12 +95,15 @@ info "Repo root   : ${REPO_ROOT}"
 step "Installing required OS packages"
 if command -v apt-get &>/dev/null; then
     PKGS=()
+    # Minimal X stack + window manager for the kiosk session
+    for p in xserver-xorg xinit openbox x11-xserver-utils; do
+        dpkg -s "$p" &>/dev/null || PKGS+=("$p")
+    done
     command -v curl &>/dev/null            || PKGS+=(curl)
     python3 -m venv --help &>/dev/null     || PKGS+=(python3-venv)
-    command -v xset &>/dev/null            || PKGS+=(x11-xserver-utils)
     if ! command -v chromium &>/dev/null && ! command -v chromium-browser &>/dev/null \
          && ! command -v google-chrome &>/dev/null; then
-        PKGS+=(chromium-browser)   # Ubuntu 24.04: this pulls the Chromium snap
+        PKGS+=(chromium-browser)   # Ubuntu: this pulls the Chromium snap
     fi
     if (( ${#PKGS[@]} > 0 )); then
         info "Installing: ${PKGS[*]}"
@@ -190,12 +188,23 @@ else
         --create-home \
         --shell /bin/bash \
         --comment "SITREP kiosk user" \
-        --groups video,audio \
+        --groups video,audio,tty,input \
         --disabled-password \
         --gecos "" \
         "${KIOSK_USER}"
     success "Created user '${KIOSK_USER}'"
     info "Set a password if needed: passwd ${KIOSK_USER}"
+fi
+
+# Ensure the kiosk user is in the groups X needs (idempotent for existing users)
+usermod -aG video,audio,tty,input "${KIOSK_USER}" || true
+
+# Allow startx to run from the auto-login console (some minimal installs default
+# to allowed_users=console only; 'anybody' is safe for a single-purpose kiosk).
+mkdir -p /etc/X11
+if [[ ! -f /etc/X11/Xwrapper.config ]] || ! grep -q '^allowed_users=anybody' /etc/X11/Xwrapper.config 2>/dev/null; then
+    printf 'allowed_users=anybody\nneeds_root_rights=yes\n' > /etc/X11/Xwrapper.config
+    success "Wrote /etc/X11/Xwrapper.config (allowed_users=anybody)"
 fi
 
 # Ensure the install dir is accessible to the kiosk user
@@ -305,70 +314,49 @@ else
     success "Service started"
 fi
 
-# ── 7. Desktop autostart entry ────────────────────────────────────────────────
-step "Installing kiosk autostart entry"
+# ── 7. Console auto-login on tty1 ─────────────────────────────────────────────
+# The board must return unattended after a power loss (NFR-2). With no display
+# manager, we auto-login the kiosk user on tty1; ~/.bash_profile then runs startx.
+step "Configuring console auto-login on tty1 for '${KIOSK_USER}'"
 
-DESKTOP_SRC="${SCRIPT_DIR}/sitrep-kiosk.desktop"
 KIOSK_HOME="$(getent passwd "${KIOSK_USER}" | cut -d: -f6)"
-AUTOSTART_DIR="${KIOSK_HOME}/.config/autostart"
+GETTY_TEMPLATE="${SCRIPT_DIR}/getty-autologin.conf"
+GETTY_DIR="/etc/systemd/system/getty@tty1.service.d"
 
-if [[ ! -f "${DESKTOP_SRC}" ]]; then
-    fail "Desktop entry template not found: ${DESKTOP_SRC}"
+if [[ ! -f "${GETTY_TEMPLATE}" ]]; then
+    fail "Getty autologin template not found: ${GETTY_TEMPLATE}"
 fi
+mkdir -p "${GETTY_DIR}"
+sed -e "s|__KIOSK_USER__|${KIOSK_USER}|g" "${GETTY_TEMPLATE}" > "${GETTY_DIR}/override.conf"
+chmod 644 "${GETTY_DIR}/override.conf"
+systemctl daemon-reload
+systemctl enable getty@tty1.service &>/dev/null || true
+success "tty1 auto-login configured for '${KIOSK_USER}'"
 
-mkdir -p "${AUTOSTART_DIR}"
+# ── 7b. Kiosk X session (startx -> Openbox -> kiosk.sh) ───────────────────────
+step "Installing kiosk X session files"
 
-# Skip the GNOME first-login setup wizard for the kiosk user so the desktop
-# (and therefore the kiosk autostart) comes up clean on the very first login.
-echo "yes" > "${KIOSK_HOME}/.config/gnome-initial-setup-done"
-chown "${KIOSK_USER}:${KIOSK_USER}" "${KIOSK_HOME}/.config/gnome-initial-setup-done"
-
-DESKTOP_DEST="${AUTOSTART_DIR}/sitrep-kiosk.desktop"
-
-# Substitute __INSTALL_DIR__ placeholder
-TMP_DESKTOP="$(mktemp)"
-sed \
-    -e "s|__INSTALL_DIR__|${INSTALL_DIR}|g" \
-    "${DESKTOP_SRC}" > "${TMP_DESKTOP}"
-
-if [[ -f "${DESKTOP_DEST}" ]] && diff -q "${TMP_DESKTOP}" "${DESKTOP_DEST}" &>/dev/null; then
-    success "Autostart entry is already up to date"
-    rm "${TMP_DESKTOP}"
-else
-    mv "${TMP_DESKTOP}" "${DESKTOP_DEST}"
-    chown -R "${KIOSK_USER}:${KIOSK_USER}" "${KIOSK_HOME}/.config"
-    chmod 644 "${DESKTOP_DEST}"
-    success "Installed ${DESKTOP_DEST}"
+# ~/.xinitrc — started by startx; brings up Openbox + the kiosk browser
+XINITRC_TEMPLATE="${SCRIPT_DIR}/xinitrc"
+if [[ ! -f "${XINITRC_TEMPLATE}" ]]; then
+    fail "xinitrc template not found: ${XINITRC_TEMPLATE}"
 fi
+sed -e "s|__INSTALL_DIR__|${INSTALL_DIR}|g" "${XINITRC_TEMPLATE}" > "${KIOSK_HOME}/.xinitrc"
+chmod 644 "${KIOSK_HOME}/.xinitrc"
+chown "${KIOSK_USER}:${KIOSK_USER}" "${KIOSK_HOME}/.xinitrc"
+success "Installed ${KIOSK_HOME}/.xinitrc"
 
-# ── 7b. GDM auto-login ────────────────────────────────────────────────────────
-# The board must come back unattended after a power loss (NFR-2). On Ubuntu
-# Desktop (GDM3) that means enabling auto-login for the kiosk user.
-step "Configuring GDM auto-login for '${KIOSK_USER}'"
-GDM_CONF="/etc/gdm3/custom.conf"
-if [[ -d /etc/gdm3 ]]; then
-    [[ -f "${GDM_CONF}" && ! -f "${GDM_CONF}.sitrep.bak" ]] && cp "${GDM_CONF}" "${GDM_CONF}.sitrep.bak"
-    # Edit the [daemon] section idempotently with Python's configparser.
-    python3 - "${GDM_CONF}" "${KIOSK_USER}" <<'PYEOF'
-import sys, os, configparser
-conf, user = sys.argv[1], sys.argv[2]
-cp = configparser.ConfigParser()
-cp.optionxform = str
-if os.path.exists(conf):
-    cp.read(conf)
-if not cp.has_section("daemon"):
-    cp.add_section("daemon")
-cp.set("daemon", "AutomaticLoginEnable", "true")
-cp.set("daemon", "AutomaticLogin", user)
-with open(conf, "w") as fh:
-    cp.write(fh)
-PYEOF
-    success "Auto-login enabled for '${KIOSK_USER}' in ${GDM_CONF} (backup: ${GDM_CONF}.sitrep.bak)"
-    info "A Wayland GNOME session will auto-start and fire the kiosk autostart entry."
-else
-    warn "GDM3 not found (/etc/gdm3 missing). Enable auto-login for '${KIOSK_USER}'"
-    warn "in your display manager manually — see deploy/README.md."
+# ~/.bash_profile — auto-run startx once, only on the tty1 console login
+cat > "${KIOSK_HOME}/.bash_profile" <<'EOF'
+# Field SITREP Board — start the X kiosk session on tty1 auto-login.
+# Guarded so SSH / other TTYs still get a normal shell.
+if [ -z "${DISPLAY:-}" ] && [ "${XDG_VTNR:-}" = "1" ]; then
+    exec startx
 fi
+EOF
+chmod 644 "${KIOSK_HOME}/.bash_profile"
+chown "${KIOSK_USER}:${KIOSK_USER}" "${KIOSK_HOME}/.bash_profile"
+success "Installed ${KIOSK_HOME}/.bash_profile (startx on tty1)"
 
 # ── 8. Make kiosk.sh executable ───────────────────────────────────────────────
 step "Ensuring kiosk.sh is executable"
@@ -389,8 +377,10 @@ echo " Health check:"
 echo "   curl http://localhost:8080/healthz"
 echo "   curl http://localhost:8080/api/state"
 echo ""
-echo " Kiosk (autostart on next login as '${KIOSK_USER}'):"
-echo "   ${INSTALL_DIR}/deploy/kiosk.sh"
+echo " Kiosk session (automatic on reboot):"
+echo "   tty1 auto-login as '${KIOSK_USER}' -> startx -> Openbox -> Chromium --kiosk"
+echo "   Reboot to verify unattended bring-up:  sudo reboot"
+echo "   Manual test (from the kiosk user on tty1):  startx"
 echo ""
 
 # Final warnings about unfilled secrets

@@ -7,7 +7,8 @@
 #   - The backend exposes GET /healthz (HTTP 200) when ready.
 #     If the backend uses a different health endpoint (e.g. /api/health),
 #     change HEALTH_URL below.  Flag this to the backend agent.
-#   - X11 session is already running (called from autostart; see kiosk.desktop).
+#   - An X11 session is already running (launched by startx from the kiosk
+#     user's ~/.xinitrc; Openbox is the window manager). See deploy/install.sh.
 #   - Runs as the kiosk user (not root).
 #
 # WHAT THIS SCRIPT DOES:
