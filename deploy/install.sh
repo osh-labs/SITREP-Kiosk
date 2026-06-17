@@ -184,13 +184,13 @@ if id "${KIOSK_USER}" &>/dev/null; then
 else
     # --disabled-password: can still log in via PAM/display manager
     # --gecos: skip interactive prompt on Debian/Ubuntu
+    # useradd creates a locked-password account by default (no --disabled-password
+    # needed; that flag belongs to adduser, not useradd). --comment sets GECOS.
     useradd \
         --create-home \
         --shell /bin/bash \
         --comment "SITREP kiosk user" \
         --groups video,audio,tty,input \
-        --disabled-password \
-        --gecos "" \
         "${KIOSK_USER}"
     success "Created user '${KIOSK_USER}'"
     info "Set a password if needed: passwd ${KIOSK_USER}"
