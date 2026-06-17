@@ -162,6 +162,12 @@ class TodayForecast:
     pop_window: Optional[str] = None
     daylight_until: Optional[str] = None
     summary: Optional[str] = None
+    # Open-Meteo-sourced extras (sun.* + UV + visibility). NWS still supplies
+    # high/low/heat index/pop above. See sources.openmeteo + STATE_CONTRACT.md.
+    sunrise: Optional[str] = None
+    sunset: Optional[str] = None
+    uv_index: Optional[float] = None
+    visibility_mi: Optional[float] = None
 
     def to_dict(self) -> dict:
         return {
@@ -172,6 +178,35 @@ class TodayForecast:
             "pop_window": self.pop_window,
             "daylight_until": self.daylight_until,
             "summary": self.summary,
+            "sunrise": self.sunrise,
+            "sunset": self.sunset,
+            "uv_index": self.uv_index,
+            "visibility_mi": self.visibility_mi,
+        }
+
+
+@dataclass
+class HourlyPoint:
+    """One hour of the Open-Meteo forecast series (verbatim, unit-converted)."""
+    time: str
+    temp_f: Optional[float] = None
+    feels_like_f: Optional[float] = None
+    heat_index_f: Optional[float] = None
+    wind_mph: Optional[float] = None
+    gust_mph: Optional[float] = None
+    pop_pct: Optional[float] = None
+    precip_in: Optional[float] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "time": self.time,
+            "temp_f": self.temp_f,
+            "feels_like_f": self.feels_like_f,
+            "heat_index_f": self.heat_index_f,
+            "wind_mph": self.wind_mph,
+            "gust_mph": self.gust_mph,
+            "pop_pct": self.pop_pct,
+            "precip_in": self.precip_in,
         }
 
 
@@ -179,12 +214,14 @@ class TodayForecast:
 class WeatherBlock:
     current: Optional[CurrentConditions] = None
     today: Optional[TodayForecast] = None
+    hourly: list[HourlyPoint] = field(default_factory=list)
     source: Optional[SourceBlock] = None
 
     def to_dict(self) -> dict:
         return {
             "current": self.current.to_dict() if self.current else None,
             "today": self.today.to_dict() if self.today else None,
+            "hourly": [h.to_dict() for h in self.hourly],
             "source": self.source.to_dict() if self.source else SourceBlock.empty("NWS FFC").to_dict(),
         }
 
@@ -294,6 +331,40 @@ class Forecast3DayBlock:
         }
 
 
+# ── Astro (computed, not source-attributed) ──────────────────────────────────
+
+@dataclass
+class AstroBlock:
+    moon_phase: Optional[str] = None        # e.g. "Waxing Gibbous"
+    illumination_pct: Optional[int] = None  # 0–100
+    phase_fraction: Optional[float] = None  # 0.0–1.0 through the synodic cycle
+
+    def to_dict(self) -> dict:
+        return {
+            "moon_phase": self.moon_phase,
+            "illumination_pct": self.illumination_pct,
+            "phase_fraction": self.phase_fraction,
+        }
+
+
+# ── Weather map (config surfaced for the frontend + freshness) ────────────────
+
+@dataclass
+class MapBlock:
+    """Surfaces the `weather_map` config block plus a freshness SourceBlock.
+
+    Tiles load directly in the browser; the authoritative warning shapes are
+    served from /api/alerts.geojson. This block carries no image bytes.
+    """
+    config: dict = field(default_factory=dict)
+    source: Optional[SourceBlock] = None
+
+    def to_dict(self) -> dict:
+        d = dict(self.config)
+        d["source"] = self.source.to_dict() if self.source else SourceBlock.empty("Weather Map").to_dict()
+        return d
+
+
 # ── Sources summary map ───────────────────────────────────────────────────────
 
 @dataclass
@@ -302,6 +373,8 @@ class SourcesMap:
     spc: SourceBlock = field(default_factory=lambda: SourceBlock.empty("SPC"))
     ga511: SourceBlock = field(default_factory=lambda: SourceBlock.empty("511GA"))
     airnow: SourceBlock = field(default_factory=lambda: SourceBlock.empty("AirNow"))
+    openmeteo: SourceBlock = field(default_factory=lambda: SourceBlock.empty("Open-Meteo"))
+    weather_map: SourceBlock = field(default_factory=lambda: SourceBlock.empty("Weather Map"))
 
     def to_dict(self) -> dict:
         return {
@@ -309,6 +382,8 @@ class SourcesMap:
             "spc": self.spc.to_dict(),
             "ga511": self.ga511.to_dict(),
             "airnow": self.airnow.to_dict(),
+            "openmeteo": self.openmeteo.to_dict(),
+            "weather_map": self.weather_map.to_dict(),
         }
 
 
@@ -325,6 +400,8 @@ class ConsolidatedState:
     commute: CommuteBlock = field(default_factory=CommuteBlock)
     disruptions: DisruptionsBlock = field(default_factory=DisruptionsBlock)
     forecast_3day: Forecast3DayBlock = field(default_factory=Forecast3DayBlock)
+    astro: AstroBlock = field(default_factory=AstroBlock)
+    weather_map: MapBlock = field(default_factory=MapBlock)
     sources: SourcesMap = field(default_factory=SourcesMap)
 
     def to_dict(self) -> dict:
@@ -338,5 +415,7 @@ class ConsolidatedState:
             "commute": self.commute.to_dict(),
             "disruptions": self.disruptions.to_dict(),
             "forecast_3day": self.forecast_3day.to_dict(),
+            "astro": self.astro.to_dict(),
+            "weather_map": self.weather_map.to_dict(),
             "sources": self.sources.to_dict(),
         }

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Field SITREP Board — United Consulting situational awareness kiosk">
   <title>Field SITREP Board</title>
+  <!-- Vendored Leaflet (no CDN at boot) -->
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,19 +26,25 @@
   <!-- Main kiosk shell -->
   <div id="app" aria-label="Field SITREP Board">
 
-    <!-- Persistent header: UC logo (left) · date/time + context (center) · ZeroHarm (right) -->
+    <!-- Persistent header: UC logo + title (left) · context + clock (center) · risk + ZeroHarm (right) -->
     <header id="global-header" aria-label="Board header">
       <div class="header-zone header-left">
         <img class="brand-logo" id="brand-uc" src="assets/uc-logo.svg" alt="United Consulting">
+        <span class="board-title">Field SITREP</span>
       </div>
       <div class="header-zone header-center">
-        <div id="header-datetime" aria-label="Current date and time" aria-live="off"></div>
-        <div class="header-meta">
+        <div class="header-context">
           <span id="header-location" aria-label="Location"></span>
           <span id="header-mode-badge" aria-label="Display mode"></span>
         </div>
+        <div id="header-datetime" aria-label="Current date and time" aria-live="off"></div>
       </div>
       <div class="header-zone header-right">
+        <div class="risk-block">
+          <span class="risk-label">Overall Risk</span>
+          <span id="overall-risk" aria-label="Overall risk level"></span>
+          <span id="next-update" aria-label="Next update"></span>
+        </div>
         <img class="brand-logo" id="brand-zeroharm" src="assets/zeroharm-logo.svg" alt="ZeroHarm safety program">
       </div>
     </header>
@@ -47,18 +55,38 @@
       <span id="status-text">Reconnecting&hellip;</span>
     </div>
 
-    <!-- Slide carousel -->
-    <main id="carousel" aria-label="Slide carousel" aria-live="off">
-      <!-- Slides are injected here by app.js -->
+    <!-- Dashboard grid -->
+    <main id="dashboard" aria-label="Situational dashboard">
+
+      <!-- Left column -->
+      <section class="dash-col dash-col-left" aria-label="Hazards and briefing">
+        <div class="card" id="card-hazards" aria-label="Hazards"></div>
+        <div class="card" id="card-summary" aria-label="Briefing summary"></div>
+      </section>
+
+      <!-- Center: interactive weather map -->
+      <section class="dash-col dash-col-center" aria-label="Weather map">
+        <div class="card card-map-wrap" id="card-map">
+          <div id="map" role="img" aria-label="Interactive weather radar and alerts map"></div>
+          <div id="map-degraded" class="map-degraded hidden" role="alert" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- Right column -->
+      <section class="dash-col dash-col-right" aria-label="Forecast and disruptions">
+        <div class="card" id="card-chart-temp" aria-label="Temperature and heat index trend"></div>
+        <div class="card" id="card-activity" aria-label="Disruptions or commute"></div>
+        <div class="card" id="card-forecast" aria-label="3-day look ahead"></div>
+      </section>
+
     </main>
 
-    <!-- Progress dots -->
-    <nav id="slide-dots" aria-label="Slide position indicator" aria-live="off">
-      <!-- Dots injected by app.js -->
-    </nav>
+    <!-- Bottom status strip -->
+    <footer id="status-strip" aria-label="Conditions summary strip"></footer>
 
   </div>
 
+  <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

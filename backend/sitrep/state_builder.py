@@ -11,8 +11,10 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from . import astro as astro_module
 from .models import (
     AlertEvent,
+    AstroBlock,
     BriefingBlock,
     CommuteBlock,
     CommuteCurrentConditions,
@@ -23,7 +25,9 @@ from .models import (
     Forecast3DayBlock,
     ForecastDay,
     HazardsBlock,
+    HourlyPoint,
     LocationBlock,
+    MapBlock,
     SourcesMap,
     SpcOutlook,
     TodayForecast,
@@ -57,41 +61,110 @@ def _iso_now() -> str:
 # Section builders
 # ---------------------------------------------------------------------------
 
-def _build_weather(nws_data: Optional[dict], nws_source_block: Any) -> WeatherBlock:
-    if not nws_data:
-        return WeatherBlock(source=nws_source_block)
+def _build_weather(
+    nws_data: Optional[dict],
+    openmeteo_data: Optional[dict],
+    nws_source_block: Any,
+) -> WeatherBlock:
+    """Build the weather block.
 
-    current_raw = nws_data.get("weather_current")
-    today_raw = nws_data.get("weather_today")
-
+    NWS supplies current conditions + today high/low/heat-index/pop (authoritative
+    observations/forecast). Open-Meteo supplies the hourly series and today's
+    sunrise/sunset/UV/visibility. NWS numbers are never overwritten by Open-Meteo.
+    """
     current = None
-    if current_raw:
-        wind_raw = current_raw.get("wind", {}) or {}
-        wind = WindInfo(
-            dir=wind_raw.get("dir"),
-            speed_mph=wind_raw.get("speed_mph"),
-            gust_mph=wind_raw.get("gust_mph"),
-        )
-        current = CurrentConditions(
-            temp_f=current_raw.get("temp_f"),
-            feels_like_f=current_raw.get("feels_like_f"),
-            wind=wind,
-            summary=current_raw.get("summary"),
-        )
-
     today = None
-    if today_raw:
-        today = TodayForecast(
-            high_f=today_raw.get("high_f"),
-            low_f=today_raw.get("low_f"),
-            heat_index_f=today_raw.get("heat_index_f"),
-            pop_pct=today_raw.get("pop_pct"),
-            pop_window=today_raw.get("pop_window"),
-            daylight_until=today_raw.get("daylight_until"),
-            summary=today_raw.get("summary"),
-        )
 
-    return WeatherBlock(current=current, today=today, source=nws_source_block)
+    if nws_data:
+        current_raw = nws_data.get("weather_current")
+        today_raw = nws_data.get("weather_today")
+
+        if current_raw:
+            wind_raw = current_raw.get("wind", {}) or {}
+            wind = WindInfo(
+                dir=wind_raw.get("dir"),
+                speed_mph=wind_raw.get("speed_mph"),
+                gust_mph=wind_raw.get("gust_mph"),
+            )
+            current = CurrentConditions(
+                temp_f=current_raw.get("temp_f"),
+                feels_like_f=current_raw.get("feels_like_f"),
+                wind=wind,
+                summary=current_raw.get("summary"),
+            )
+
+        if today_raw:
+            today = TodayForecast(
+                high_f=today_raw.get("high_f"),
+                low_f=today_raw.get("low_f"),
+                heat_index_f=today_raw.get("heat_index_f"),
+                pop_pct=today_raw.get("pop_pct"),
+                pop_window=today_raw.get("pop_window"),
+                daylight_until=today_raw.get("daylight_until"),
+                summary=today_raw.get("summary"),
+            )
+
+    # ── Open-Meteo extras (hourly + sunrise/sunset/UV/visibility) ──────────────
+    hourly: list[HourlyPoint] = []
+    if openmeteo_data:
+        for hp in openmeteo_data.get("hourly", []) or []:
+            hourly.append(HourlyPoint(
+                time=hp.get("time", ""),
+                temp_f=hp.get("temp_f"),
+                feels_like_f=hp.get("feels_like_f"),
+                heat_index_f=hp.get("heat_index_f"),
+                wind_mph=hp.get("wind_mph"),
+                gust_mph=hp.get("gust_mph"),
+                pop_pct=hp.get("pop_pct"),
+                precip_in=hp.get("precip_in"),
+            ))
+        om_today = openmeteo_data.get("today", {}) or {}
+        if om_today:
+            if today is None:
+                today = TodayForecast()
+            today.sunrise = om_today.get("sunrise")
+            today.sunset = om_today.get("sunset")
+            today.uv_index = om_today.get("uv_index")
+            today.visibility_mi = om_today.get("visibility_mi")
+
+    return WeatherBlock(current=current, today=today, hourly=hourly, source=nws_source_block)
+
+
+def _build_astro(now: Optional[datetime] = None) -> AstroBlock:
+    """Compute moon phase deterministically (no source)."""
+    data = astro_module.moon_phase(now)
+    return AstroBlock(
+        moon_phase=data["moon_phase"],
+        illumination_pct=data["illumination_pct"],
+        phase_fraction=data["phase_fraction"],
+    )
+
+
+_DEFAULT_MAP_CONFIG = {
+    "enabled": True,
+    "center": {"lat": 33.7490, "lon": -84.3880},
+    "default_zoom": 8,
+    "min_zoom": 6,
+    "max_zoom": 10,
+    "base_style": "dark",
+    "layers": {
+        "radar": {"default_on": True, "opacity": 0.7},
+        "alerts": {"default_on": True},
+    },
+    "animation": {"enabled": True, "frames": 8, "interval_ms": 600, "refresh_seconds": 300},
+}
+
+
+def _build_weather_map(config: Any, source_block: Any) -> MapBlock:
+    """Surface the weather_map config (with location fallback) + freshness."""
+    cfg_map = config.get("weather_map", default=None)
+    map_cfg = dict(_DEFAULT_MAP_CONFIG)
+    if isinstance(cfg_map, dict):
+        map_cfg = {**_DEFAULT_MAP_CONFIG, **cfg_map}
+    # Default the map center to the configured location when unset.
+    if not map_cfg.get("center"):
+        map_cfg["center"] = {"lat": config.lat, "lon": config.lon}
+    return MapBlock(config=map_cfg, source=source_block)
 
 
 def _build_disruptions(
@@ -190,13 +263,16 @@ def _build_forecast_3day(
 
 
 def _build_sources_map(
-    nws_sb: Any, spc_sb: Any, ga511_sb: Any, airnow_sb: Any
+    nws_sb: Any, spc_sb: Any, ga511_sb: Any, airnow_sb: Any,
+    openmeteo_sb: Any, weather_map_sb: Any,
 ) -> SourcesMap:
     return SourcesMap(
         nws=nws_sb,
         spc=spc_sb,
         ga511=ga511_sb,
         airnow=airnow_sb,
+        openmeteo=openmeteo_sb,
+        weather_map=weather_map_sb,
     )
 
 
@@ -242,6 +318,7 @@ def build_state(
     briefing: Optional[dict],
     cache: Any,
     config: Any,
+    openmeteo_data: Optional[dict] = None,
 ) -> ConsolidatedState:
     """
     Assemble the full consolidated state dict.
@@ -266,6 +343,8 @@ def build_state(
     spc_sb = cache.get_source_block("spc")
     ga511_sb = cache.get_source_block("ga511")
     airnow_sb = cache.get_source_block("airnow")
+    openmeteo_sb = cache.get_source_block("openmeteo")
+    weather_map_sb = cache.get_source_block("weather_map")
 
     # ── Display mode ─────────────────────────────────────────────────────────
     mode = _compute_display_mode(config)
@@ -301,7 +380,7 @@ def build_state(
         )
 
     # ── Section blocks ────────────────────────────────────────────────────────
-    weather = _build_weather(nws_data, nws_sb)
+    weather = _build_weather(nws_data, openmeteo_data, nws_sb)
 
     disruptions = _build_disruptions(
         nws_data, ga511_data,
@@ -316,7 +395,12 @@ def build_state(
     forecast = _build_forecast_3day(nws_data, spc_data, None)
     forecast.source = _combined_source("NWS FFC, SPC", [nws_sb, spc_sb])
 
-    sources_map = _build_sources_map(nws_sb, spc_sb, ga511_sb, airnow_sb)
+    astro = _build_astro()
+    weather_map = _build_weather_map(config, weather_map_sb)
+
+    sources_map = _build_sources_map(
+        nws_sb, spc_sb, ga511_sb, airnow_sb, openmeteo_sb, weather_map_sb
+    )
 
     return ConsolidatedState(
         generated_at=now,
@@ -328,5 +412,7 @@ def build_state(
         commute=commute,
         disruptions=disruptions,
         forecast_3day=forecast,
+        astro=astro,
+        weather_map=weather_map,
         sources=sources_map,
     )

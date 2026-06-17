@@ -6,19 +6,44 @@ location:
   lat: 33.7490
   lon: -84.3880
 
+# Open-Meteo + map settings. Open-Meteo is keyless; it supplies the hourly
+# series, charts, and the sunrise/sunset/UV/visibility status-strip items.
+# NWS stays authoritative for current conditions and alerts.
+weather:
+  timezone: "America/New_York"   # IANA tz for Open-Meteo (keeps arrays local)
+
 display:
-  dwell_seconds: 12
+  dwell_seconds: 12              # legacy carousel dwell; ignored by the single dashboard
   mode_windows:
     morning_until: "12:00"   # local time; afternoon mode thereafter
   work_hours:                # used for "during work hours" trigger checks
     start: "06:00"
     end: "18:00"
 
+# Customizable interactive weather map (Leaflet). Tiles load in the browser;
+# the authoritative alert polygons come from /api/alerts.geojson (loopback).
+weather_map:
+  enabled: true
+  center: { lat: 33.7490, lon: -84.3880 }   # defaults to location if omitted
+  default_zoom: 8
+  min_zoom: 6
+  max_zoom: 10
+  base_style: dark                # dark | osm | esri_dark
+  layers:
+    radar:  { default_on: true, opacity: 0.7 }
+    alerts: { default_on: true }
+  animation:
+    enabled: true
+    frames: 8                     # number of 5-min IEM radar steps in the loop
+    interval_ms: 600              # dwell per frame
+    refresh_seconds: 300          # rebuild the frame set (match IEM's ~5-min cadence)
+
 polling_seconds:
   nws: 900        # 10-15 min
   spc: 1800
   airnow: 1800    # hourly NowCast; stay well under 500 req/hr/service
   ga511: 90       # within 10 calls / 60 s
+  openmeteo: 900  # keyless; generous free tier — 15 min matches NWS cadence
   briefing: 1800  # regenerate BLUF on schedule; also regenerate on material change
 
 staleness_seconds:

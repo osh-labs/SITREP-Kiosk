@@ -68,11 +68,33 @@ _DEFAULTS: dict[str, Any] = {
         "mode_windows": {"morning_until": "12:00"},
         "work_hours": {"start": "06:00", "end": "18:00"},
     },
+    "weather": {
+        "timezone": "America/New_York",
+    },
+    "weather_map": {
+        "enabled": True,
+        "center": {"lat": 33.7490, "lon": -84.3880},
+        "default_zoom": 8,
+        "min_zoom": 6,
+        "max_zoom": 10,
+        "base_style": "dark",
+        "layers": {
+            "radar": {"default_on": True, "opacity": 0.7},
+            "alerts": {"default_on": True},
+        },
+        "animation": {
+            "enabled": True,
+            "frames": 8,
+            "interval_ms": 600,
+            "refresh_seconds": 300,
+        },
+    },
     "polling_seconds": {
         "nws": 900,
         "spc": 1800,
         "airnow": 1800,
         "ga511": 90,
+        "openmeteo": 900,
         "briefing": 1800,
     },
     "staleness_seconds": {

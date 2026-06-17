@@ -58,6 +58,8 @@ No Node runtime. No frontend build pipeline. One process tree.
 | 511GA | developer key | 10 calls / 60 s | events, alerts, cameras, message signs. Poll traffic at ~90 s to stay under the limit. |
 | EPA AirNow | API key | 500 req/hr per service | current AQI by lat/long, hourly NowCast. Poll ~hourly. |
 | Anthropic | API key | n/a | briefing generation only. |
+| Open-Meteo | none (public) | be polite (~15 min) | **Supplementary, sanctioned addition.** Hourly series, sunrise/sunset, UV, visibility for the dashboard. NWS stays authoritative for observations/alerts — Open-Meteo never overrides NWS numbers. |
+| Map tiles (CARTO base + IEM NEXRAD radar) | none (public) | be polite (one kiosk, ~5 min) | **Sanctioned addition.** Loaded directly by the browser for the interactive Leaflet map (documented exception to loopback-only, for non-authoritative imagery). Authoritative alert polygons come from the loopback `/api/alerts.geojson`. |
 
 Secrets come from environment variables — see `.env.example`. Never hardcode
 keys, never put them in the frontend, never commit `.env`.
