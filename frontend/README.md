@@ -46,17 +46,21 @@ is ignored.
 
 ```
 Header:   UC logo + FIELD SITREP · location + mode + clock · OVERALL RISK + ZeroHarm
-Left:     Briefing · Key Conditions · Hazards · Disruptions&Alerts / PM Commute (by mode)
+Left:     Briefing · Hazards · Disruptions&Alerts / PM Commute (by mode)
 Center:   Interactive Leaflet map (CARTO dark base + animated IEM radar + NWS alerts)
-Right:    Hourly table · Temperature chart · Wind chart · 3-Day Look Ahead
-Strip:    Sunrise · Sunset · Moon · Precip · Visibility · Air Quality · UV · All Systems Go
+Right:    Temperature & Heat Index chart · 3-Day Look Ahead
+Strip:    Temp · Forecast (high + heat index / low) · Precip · Air Quality · UV · Sunrise · Sunset · All Systems Go
 ```
 
 - **OVERALL RISK** is derived deterministically from `hazards.ranked[0].severity`
   (LOW → SEVERE) and shown as icon + label + color (never color alone).
 - **Mode** (`display.mode`) only swaps the left-column activity card between
   Disruptions & Alerts (morning) and PM Commute (afternoon).
-- **Charts** are hand-rolled inline SVG (no chart library).
+- Cards size to their content and the columns are top-aligned, so panels don't
+  clip. **Key conditions live in the bottom strip** (no separate card).
+- The **Temperature chart** plots air temp (solid) and heat index (dashed); it's
+  hand-rolled inline SVG (no chart library). Wind and the numeric hourly table
+  were dropped as low-value for the across-the-room glance.
 
 ## Files
 

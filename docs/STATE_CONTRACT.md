@@ -93,7 +93,7 @@ A `source` block:
       "uv_index": 8.0, "visibility_mi": 9.0
     },
     "hourly": [
-      { "time": "2026-06-13T07:00", "temp_f": 78.0, "feels_like_f": 82.0, "wind_mph": 6.0, "gust_mph": 13.0, "pop_pct": 10, "precip_in": 0.0 }
+      { "time": "2026-06-13T07:00", "temp_f": 78.0, "feels_like_f": 82.0, "heat_index_f": 78.0, "wind_mph": 6.0, "gust_mph": 13.0, "pop_pct": 10, "precip_in": 0.0 }
     ],
     "source": { "name": "NWS FFC", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" }
   },

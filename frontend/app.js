@@ -163,13 +163,10 @@ const $statusTxt  = document.getElementById('status-text');
 const $risk       = document.getElementById('overall-risk');
 const $nextUpdate = document.getElementById('next-update');
 const $summary    = document.getElementById('card-summary');
-const $conditions = document.getElementById('card-conditions');
 const $hazards    = document.getElementById('card-hazards');
 const $activity   = document.getElementById('card-activity');
 const $mapDegraded = document.getElementById('map-degraded');
-const $hourly     = document.getElementById('card-hourly');
 const $chartTemp  = document.getElementById('card-chart-temp');
-const $chartWind  = document.getElementById('card-chart-wind');
 const $forecast   = document.getElementById('card-forecast');
 const $strip      = document.getElementById('status-strip');
 
@@ -349,42 +346,6 @@ function renderSummary(state) {
     <div class="card-foot">${esc(srcName)} &middot; ${esc(b.source || 'template')} &middot; Updated ${updated}</div>`;
 }
 
-function renderConditions(state) {
-  const w   = state.weather || {};
-  const cur = w.current || {};
-  const tod = w.today || {};
-  const src = w.source || {};
-  const wind = cur.wind || {};
-
-  const windStr = wind.speed_mph != null
-    ? `${esc(wind.dir || '')} ${val(wind.speed_mph, ' mph')}${wind.gust_mph != null ? ' G' + esc(String(wind.gust_mph)) : ''}`
-    : '&mdash;';
-  const popStr = tod.pop_pct != null
-    ? `${val(tod.pop_pct, '%')}${tod.pop_window ? '<span class="tile-sub">' + esc(tod.pop_window) + '</span>' : ''}`
-    : val(null);
-  const visStr = tod.visibility_mi != null ? val(tod.visibility_mi, ' mi') : val(null);
-
-  const deg = isDegraded(src) ? degradedBanner(src) : '';
-  const heatRow = tod.heat_index_f != null
-    ? `<div class="tile"><span class="tile-label">Heat Index</span><span class="tile-value hot">${val(tod.heat_index_f, '°F')}</span></div>`
-    : '';
-
-  $conditions.innerHTML = `
-    ${cardTitle('Key Conditions')}
-    <div class="card-body">
-      ${deg}
-      <div class="conditions-grid">
-        <div class="tile"><span class="tile-label">Temp</span><span class="tile-value">${val(cur.temp_f, '°')}</span><span class="tile-sub">feels ${val(cur.feels_like_f, '°')}</span></div>
-        <div class="tile"><span class="tile-label">Wind</span><span class="tile-value">${windStr}</span></div>
-        <div class="tile"><span class="tile-label">Precip Chance</span><span class="tile-value">${popStr}</span></div>
-        <div class="tile"><span class="tile-label">Visibility</span><span class="tile-value">${visStr}</span></div>
-        ${heatRow}
-        <div class="tile"><span class="tile-label">Today</span><span class="tile-value">${val(tod.high_f, '°')}/<span class="lo">${val(tod.low_f, '°')}</span></span><span class="tile-sub">${esc(tod.summary || '')}</span></div>
-      </div>
-    </div>
-    ${cardFooter(src)}`;
-}
-
 function renderHazards(state) {
   const h = state.hazards || {};
   const ranked = Array.isArray(h.ranked) ? h.ranked : [];
@@ -479,40 +440,7 @@ function renderActivity(state) {
     </div>${cardFooter(src)}`;
 }
 
-/* ── Hourly table + charts ────────────────────────────────────────────────── */
-
-function renderHourly(state) {
-  const w = state.weather || {};
-  const hours = (Array.isArray(w.hourly) ? w.hourly : []).slice(0, 8);
-  const src = (state.sources || {}).openmeteo || {};
-  const deg = isDegraded(src) ? degradedBanner(src) : '';
-
-  if (hours.length === 0) {
-    $hourly.innerHTML = `${cardTitle('Hourly Forecast')}<div class="card-body">${deg}<div class="no-data-placeholder">Hourly forecast unavailable.</div></div>${cardFooter(src)}`;
-    return;
-  }
-
-  const head = hours.map(h => `<th>${esc(hhmm(h.time) || '')}</th>`).join('');
-  const row = (label, fn) => `<tr><th class="row-label">${label}</th>${hours.map(h => `<td>${fn(h)}</td>`).join('')}</tr>`;
-
-  $hourly.innerHTML = `
-    ${cardTitle('Hourly Forecast')}
-    <div class="card-body">
-      ${deg}
-      <table class="hourly-table" aria-label="Hourly forecast">
-        <thead><tr><th class="row-label">Hr</th>${head}</tr></thead>
-        <tbody>
-          ${row('Temp °F',   h => val(h.temp_f))}
-          ${row('Feels °F',  h => val(h.feels_like_f))}
-          ${row('Wind',      h => val(h.wind_mph))}
-          ${row('Gust',      h => val(h.gust_mph))}
-          ${row('Precip %',  h => val(h.pop_pct))}
-          ${row('Precip in', h => val(h.precip_in))}
-        </tbody>
-      </table>
-    </div>
-    ${cardFooter(src)}`;
-}
+/* ── Temperature / heat-index chart ───────────────────────────────────────── */
 
 /** Map a numeric series to "x,y x,y …" polyline points within a viewBox. */
 function chartPoints(values, w, h, pad, minV, maxV) {
@@ -531,62 +459,32 @@ function renderTempChart(state) {
   const hours = (Array.isArray(w.hourly) ? w.hourly : []).slice(0, 12);
   const src = (state.sources || {}).openmeteo || {};
   const temps = hours.map(h => h.temp_f).filter(v => v != null);
-  const feels = hours.map(h => h.feels_like_f).filter(v => v != null);
+  const heat  = hours.map(h => h.heat_index_f).filter(v => v != null);
 
   if (temps.length < 2) {
-    $chartTemp.innerHTML = `${cardTitle('Temperature')}<div class="card-body"><div class="no-data-placeholder">&mdash;</div></div>`;
+    $chartTemp.innerHTML = `${cardTitle('Temperature & Heat Index')}<div class="card-body"><div class="no-data-placeholder">&mdash;</div></div>`;
     return;
   }
   const W = 320, H = 120, PAD = 18;
-  const all = temps.concat(feels);
+  const all = temps.concat(heat);
   const minV = Math.min(...all) - 2, maxV = Math.max(...all) + 2;
   const tPts = chartPoints(hours.map(h => h.temp_f != null ? h.temp_f : minV), W, H, PAD, minV, maxV);
-  const fPts = chartPoints(hours.map(h => h.feels_like_f != null ? h.feels_like_f : minV), W, H, PAD, minV, maxV);
+  const hPts = chartPoints(hours.map(h => h.heat_index_f != null ? h.heat_index_f : (h.temp_f != null ? h.temp_f : minV)), W, H, PAD, minV, maxV);
   const ticks = [0, Math.floor(hours.length / 2), hours.length - 1]
     .map(i => `<span>${esc(hhmm(hours[i].time) || '')}</span>`).join('');
 
   $chartTemp.innerHTML = `
-    ${cardTitle('Temperature')}
+    ${cardTitle('Temperature & Heat Index')}
     <div class="card-body chart-body">
       <svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-        <polyline points="${fPts}" class="spark-line spark-feels"/>
+        <polyline points="${hPts}" class="spark-line spark-heat"/>
         <polyline points="${tPts}" class="spark-line spark-temp"/>
       </svg>
       <div class="chart-axis"><span>${Math.round(maxV)}°</span><span>${Math.round(minV)}°</span></div>
       <div class="chart-ticks">${ticks}</div>
-      <div class="chart-legend"><span class="lg lg-temp">— Temp</span><span class="lg lg-feels">– – Feels like</span></div>
-    </div>`;
-}
-
-function renderWindChart(state) {
-  const w = state.weather || {};
-  const hours = (Array.isArray(w.hourly) ? w.hourly : []).slice(0, 12);
-  const winds = hours.map(h => h.wind_mph).filter(v => v != null);
-  const gusts = hours.map(h => h.gust_mph).filter(v => v != null);
-
-  if (winds.length < 2) {
-    $chartWind.innerHTML = `${cardTitle('Wind')}<div class="card-body"><div class="no-data-placeholder">&mdash;</div></div>`;
-    return;
-  }
-  const W = 320, H = 120, PAD = 18;
-  const all = winds.concat(gusts);
-  const minV = 0, maxV = Math.max(...all) + 3;
-  const wPts = chartPoints(hours.map(h => h.wind_mph != null ? h.wind_mph : 0), W, H, PAD, minV, maxV);
-  const gPts = chartPoints(hours.map(h => h.gust_mph != null ? h.gust_mph : 0), W, H, PAD, minV, maxV);
-  const ticks = [0, Math.floor(hours.length / 2), hours.length - 1]
-    .map(i => `<span>${esc(hhmm(hours[i].time) || '')}</span>`).join('');
-
-  $chartWind.innerHTML = `
-    ${cardTitle('Wind')}
-    <div class="card-body chart-body">
-      <svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-        <polyline points="${gPts}" class="spark-line spark-gust"/>
-        <polyline points="${wPts}" class="spark-line spark-wind"/>
-      </svg>
-      <div class="chart-axis"><span>${Math.round(maxV)}</span><span>0 mph</span></div>
-      <div class="chart-ticks">${ticks}</div>
-      <div class="chart-legend"><span class="lg lg-wind">— Wind</span><span class="lg lg-gust">– – Gusts</span></div>
-    </div>`;
+      <div class="chart-legend"><span class="lg lg-temp">— Temp</span><span class="lg lg-heat">– – Heat Index</span></div>
+    </div>
+    ${cardFooter(src)}`;
 }
 
 function renderForecastMini(state) {
@@ -627,20 +525,30 @@ function renderForecastMini(state) {
 /* ── Bottom status strip ──────────────────────────────────────────────────── */
 
 function renderStatusStrip(state) {
-  const tod = (state.weather || {}).today || {};
-  const astro = state.astro || {};
+  const w   = state.weather || {};
+  const cur = w.current || {};
+  const tod = w.today || {};
   const aqi = (state.hazards || {}).aqi_callout || null;
   const sources = state.sources || {};
 
+  // Forecast headline: high + heat index when hot, otherwise high/low (winter).
+  const todayVal = tod.high_f != null ? `${Math.round(tod.high_f)}°` : '—';
+  const todaySub = tod.heat_index_f != null
+    ? `HI ${Math.round(tod.heat_index_f)}°`
+    : (tod.low_f != null ? `Lo ${Math.round(tod.low_f)}°` : '');
+
   const items = [];
+  items.push(stripItem('🌡', 'Temp',
+    cur.temp_f != null ? `${Math.round(cur.temp_f)}°` : '—',
+    cur.feels_like_f != null ? `feels ${Math.round(cur.feels_like_f)}°` : ''));
+  items.push(stripItem('⤒', 'Forecast', todayVal, todaySub));
+  items.push(stripItem('☂', 'Precip Chance', tod.pop_pct != null ? `${tod.pop_pct}%` : '—',
+    tod.pop_window ? esc(tod.pop_window) : ''));
+  items.push(stripItem('●', 'Air Quality', aqi ? aqi.label : 'No data',
+    aqi ? `AQI ${aqi.aqi}` : ''));
+  items.push(stripItem('✷', 'UV Index', tod.uv_index != null ? String(tod.uv_index) : '—'));
   items.push(stripItem('☀', 'Sunrise', hhmm(tod.sunrise) || '—'));
   items.push(stripItem('☾', 'Sunset', hhmm(tod.sunset) || '—'));
-  items.push(stripItem('🌙', astro.moon_phase || 'Moon',
-    astro.illumination_pct != null ? `${astro.illumination_pct}% lit` : '—'));
-  items.push(stripItem('☂', 'Precip Chance', tod.pop_pct != null ? `${tod.pop_pct}%` : '—'));
-  items.push(stripItem('◎', 'Visibility', tod.visibility_mi != null ? `${tod.visibility_mi} mi` : '—'));
-  items.push(stripItem('●', 'Air Quality', aqi ? `${aqi.label} (AQI ${aqi.aqi})` : 'No data'));
-  items.push(stripItem('✷', 'UV Index', tod.uv_index != null ? String(tod.uv_index) : '—'));
 
   // All-systems aggregate across every live source.
   const blocks = ['nws', 'spc', 'ga511', 'airnow', 'openmeteo', 'weather_map']
@@ -654,10 +562,11 @@ function renderStatusStrip(state) {
   $strip.innerHTML = items.join('') + sysHtml;
 }
 
-function stripItem(icon, label, value) {
+function stripItem(icon, label, value, sub = '') {
+  const subHtml = sub ? `<span class="strip-sub">${esc(sub)}</span>` : '';
   return `<div class="strip-item">
     <i class="strip-icon" aria-hidden="true">${icon}</i>
-    <div class="strip-text"><span class="strip-label">${esc(label)}</span><span class="strip-value">${esc(value)}</span></div>
+    <div class="strip-text"><span class="strip-label">${esc(label)}</span><span class="strip-value">${esc(value)}</span>${subHtml}</div>
   </div>`;
 }
 
@@ -827,13 +736,10 @@ function renderDashboard(state) {
   renderOverallRisk(state);
   renderNextUpdate(state);
   renderSummary(state);
-  renderConditions(state);
   renderHazards(state);
   renderActivity(state);
   renderMap(state);
-  renderHourly(state);
   renderTempChart(state);
-  renderWindChart(state);
   renderForecastMini(state);
   renderStatusStrip(state);
 }

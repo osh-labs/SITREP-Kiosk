@@ -112,6 +112,7 @@ def _build_weather(
                 time=hp.get("time", ""),
                 temp_f=hp.get("temp_f"),
                 feels_like_f=hp.get("feels_like_f"),
+                heat_index_f=hp.get("heat_index_f"),
                 wind_mph=hp.get("wind_mph"),
                 gust_mph=hp.get("gust_mph"),
                 pop_pct=hp.get("pop_pct"),

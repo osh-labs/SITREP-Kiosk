@@ -62,9 +62,9 @@ html, body {
   color: var(--text-primary);
   font-family: "Inter", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI",
                "Helvetica Neue", Arial, "Liberation Sans", sans-serif;
-  /* Root size drives all rem-based sizing. Trimmed ~10% from 16px so more data
-     fits without clipping; still legible across the room (PRD NFR-7). */
-  font-size: 14.4px;
+  /* Root size drives all rem-based sizing. Trimmed from 16px so more data fits
+     without clipping; still legible across the room (PRD NFR-7). */
+  font-size: 13px;
   line-height: var(--lh-normal);
   -webkit-font-smoothing: antialiased;
 }
@@ -187,9 +187,11 @@ html, body {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  flex: 1 1 0;
+  flex: 0 0 auto;   /* cards size to their content; columns are top-aligned */
 }
 .card.hidden { display: none; }
+/* The center map card fills the whole column height */
+.dash-col-center, .dash-col-center .card { flex: 1 1 auto; }
 .card-head {
   flex-shrink: 0;
   padding: 0.5rem 1rem;
@@ -354,19 +356,15 @@ html, body {
 
 /* ── Charts (inline SVG) ────────────────────────────────────────────── */
 .chart-body { gap: 0.2rem; }
-.spark { width: 100%; flex: 1; min-height: 0; }
+.spark { width: 100%; height: 12rem; }
 .spark-line { fill: none; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
 .spark-temp  { stroke: #ff8a5c; }
-.spark-feels { stroke: #ffd97a; stroke-dasharray: 5 4; }
-.spark-wind  { stroke: #4aa3ff; }
-.spark-gust  { stroke: #8ec6ff; stroke-dasharray: 5 4; }
+.spark-heat  { stroke: #ffb84d; stroke-dasharray: 5 4; }
 .chart-axis { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--text-muted); }
 .chart-ticks { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--text-muted); }
 .chart-legend { display: flex; gap: 1rem; font-size: var(--fs-xs); font-weight: 700; }
-.lg-temp, .lg-wind { color: #ff8a5c; }
-.lg-wind { color: #4aa3ff; }
-.lg-feels { color: #ffd97a; }
-.lg-gust { color: #8ec6ff; }
+.lg-temp { color: #ff8a5c; }
+.lg-heat { color: #ffb84d; }
 
 /* ── 3-Day forecast ─────────────────────────────────────────────────── */
 .forecast-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; }
@@ -408,6 +406,7 @@ html, body {
 .strip-text { display: flex; flex-direction: column; min-width: 0; }
 .strip-label { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
 .strip-value { font-size: var(--fs-base); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+.strip-sub { font-size: var(--fs-xs); color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
 .strip-status.ok    { color: var(--sev-watch-text); }
 .strip-status.ok i  { color: var(--sev-watch-text); font-size: 1.6rem; }
 .strip-status.ok .strip-value { color: var(--sev-watch-text); }

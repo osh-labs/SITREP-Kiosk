@@ -66,6 +66,25 @@ def _timezone(config: Any) -> str:
     return tz or "America/New_York"
 
 
+def _heat_index_f(temp_f: Optional[float], rh: Optional[float]) -> Optional[float]:
+    """Steadman (NWS simplified) heat index. Below 80°F it returns the air temp
+    so the charted line stays continuous and only diverges when it's hot."""
+    if temp_f is None:
+        return None
+    if temp_f < 80 or rh is None:
+        return round(temp_f, 1)
+    hi = (-42.379
+          + 2.04901523 * temp_f
+          + 10.14333127 * rh
+          - 0.22475541 * temp_f * rh
+          - 0.00683783 * temp_f ** 2
+          - 0.05481717 * rh ** 2
+          + 0.00122874 * temp_f ** 2 * rh
+          + 0.00085282 * temp_f * rh ** 2
+          - 0.00000199 * temp_f ** 2 * rh ** 2)
+    return round(hi, 1)
+
+
 def fetch(client: Any, config: Any) -> dict[str, Any]:
     """Fetch the Open-Meteo forecast and normalize it. Keyless."""
     result: dict[str, Any] = {"hourly": [], "today": {}, "_ok": False}
@@ -76,6 +95,7 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         "hourly": ",".join([
             "temperature_2m",
             "apparent_temperature",
+            "relative_humidity_2m",
             "wind_speed_10m",
             "wind_gusts_10m",
             "precipitation_probability",
@@ -104,6 +124,7 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         times = hourly.get("time", []) or []
         temps = hourly.get("temperature_2m", []) or []
         feels = hourly.get("apparent_temperature", []) or []
+        rhs = hourly.get("relative_humidity_2m", []) or []
         winds = hourly.get("wind_speed_10m", []) or []
         gusts = hourly.get("wind_gusts_10m", []) or []
         pops = hourly.get("precipitation_probability", []) or []
@@ -122,10 +143,13 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         for i in range(start_ix, min(start_ix + _HOURLY_KEEP, len(times))):
             def at(arr: list, ix: int = i) -> Any:
                 return arr[ix] if ix < len(arr) else None
+            temp_f = _round_or_none(at(temps))
+            rh = at(rhs)
             points.append({
                 "time": times[i],
-                "temp_f": _round_or_none(at(temps)),
+                "temp_f": temp_f,
                 "feels_like_f": _round_or_none(at(feels)),
+                "heat_index_f": _heat_index_f(temp_f, rh),
                 "wind_mph": _round_or_none(at(winds)),
                 "gust_mph": _round_or_none(at(gusts)),
                 "pop_pct": _int_or_none(at(pops)),

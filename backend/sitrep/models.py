@@ -191,6 +191,7 @@ class HourlyPoint:
     time: str
     temp_f: Optional[float] = None
     feels_like_f: Optional[float] = None
+    heat_index_f: Optional[float] = None
     wind_mph: Optional[float] = None
     gust_mph: Optional[float] = None
     pop_pct: Optional[float] = None
@@ -201,6 +202,7 @@ class HourlyPoint:
             "time": self.time,
             "temp_f": self.temp_f,
             "feels_like_f": self.feels_like_f,
+            "heat_index_f": self.heat_index_f,
             "wind_mph": self.wind_mph,
             "gust_mph": self.gust_mph,
             "pop_pct": self.pop_pct,

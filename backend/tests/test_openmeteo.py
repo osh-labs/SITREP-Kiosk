@@ -41,6 +41,7 @@ def _sample_payload():
             "time": times,
             "temperature_2m": [78.0, 80.1, 82.5, 84.0, 85.2, 86.0],
             "apparent_temperature": [82.0, 84.0, 88.0, 90.0, 92.0, 93.0],
+            "relative_humidity_2m": [60, 62, 65, 68, 70, 72],
             "wind_speed_10m": [6.0, 7.0, 8.0, 9.0, 10.0, 11.0],
             "wind_gusts_10m": [12.0, 14.0, 16.0, 18.0, 20.0, 22.0],
             "precipitation_probability": [10, 20, 30, 40, 50, 60],
@@ -73,6 +74,11 @@ def test_normalizes_hourly_and_daily(cfg):
     assert first["pop_pct"] == 10
     assert first["wind_mph"] == 6.0
     assert first["gust_mph"] == 12.0
+    # Below 80°F the heat index equals the air temp (continuous line)
+    assert first["heat_index_f"] == 78.0
+    # When hot, heat index is computed and rises above the air temp
+    hot = out["hourly"][3]   # 84°F, 68% RH
+    assert hot["heat_index_f"] >= hot["temp_f"]
 
     today = out["today"]
     assert today["sunrise"] == "2026-06-13T06:27"
