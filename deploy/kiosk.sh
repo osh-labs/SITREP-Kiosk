@@ -7,7 +7,8 @@
 #   - The backend exposes GET /healthz (HTTP 200) when ready.
 #     If the backend uses a different health endpoint (e.g. /api/health),
 #     change HEALTH_URL below.  Flag this to the backend agent.
-#   - X11 session is already running (called from autostart; see kiosk.desktop).
+#   - An X11 session is already running (launched by startx from the kiosk
+#     user's ~/.xinitrc; Openbox is the window manager). See deploy/install.sh.
 #   - Runs as the kiosk user (not root).
 #
 # WHAT THIS SCRIPT DOES:
@@ -42,23 +43,32 @@ warn() { echo "[kiosk] $(date '+%Y-%m-%d %H:%M:%S') WARNING: $*" >&2; }
 die()  { echo "[kiosk] $(date '+%Y-%m-%d %H:%M:%S') FATAL: $*" >&2; exit 1; }
 
 # ── 1. Display power management ───────────────────────────────────────────────
-# Guard: only call xset if DISPLAY is set and xset is available.
-disable_display_sleep() {
-    if [[ -z "${DISPLAY:-}" ]]; then
-        warn "DISPLAY not set; skipping xset (screen blanking not disabled)"
-        return
+# Disable screen blanking / sleep. Ubuntu 24.04 GNOME defaults to a *Wayland*
+# session where xset is a no-op, so we also drive GNOME via gsettings. Both
+# paths are guarded and best-effort (|| true) so neither aborts the kiosk.
+disable_screen_blanking() {
+    # X11 path (works on Xorg sessions / XWayland)
+    if [[ -n "${DISPLAY:-}" ]] && command -v xset &>/dev/null; then
+        log "Disabling X11 screen blanking (xset)"
+        xset s off     || true   # disable screen saver
+        xset -dpms     || true   # disable DPMS power management
+        xset s noblank || true   # disable screen blanking
     fi
-    if ! command -v xset &>/dev/null; then
-        warn "xset not found; install x11-xserver-utils to disable screen blanking"
-        return
+    # GNOME / Wayland path (Ubuntu 24.04 default)
+    if command -v gsettings &>/dev/null; then
+        log "Disabling GNOME idle/blank/lock (gsettings)"
+        gsettings set org.gnome.desktop.session idle-delay 0 || true
+        gsettings set org.gnome.desktop.screensaver idle-activation-enabled false || true
+        gsettings set org.gnome.desktop.screensaver lock-enabled false || true
+        gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing' || true
+        gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing' || true
     fi
-    log "Disabling display sleep and screen blanking"
-    xset s off          # disable screen saver
-    xset -dpms          # disable DPMS (Energy Star) power management
-    xset s noblank      # disable screen blanking
+    if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
+        warn "Neither DISPLAY nor WAYLAND_DISPLAY is set — not in a graphical session yet"
+    fi
 }
 
-disable_display_sleep
+disable_screen_blanking
 
 # ── 2. Locate a Chromium binary ───────────────────────────────────────────────
 find_chromium() {
@@ -103,6 +113,9 @@ CHROMIUM_FLAGS=(
     "--noerrdialogs"
     "--disable-session-crashed-bubble"
     "--incognito"
+
+    # Wayland-native when available (Ubuntu 24.04 GNOME), else falls back to XWayland
+    "--ozone-platform-hint=auto"
 
     # UI noise suppression
     "--disable-infobars"

@@ -1,0 +1,24 @@
+#!/bin/sh
+# =============================================================================
+# xinitrc — X session for the Field SITREP Board kiosk (minimal X + Openbox)
+#
+# Installed to the kiosk user's ~/.xinitrc by deploy/install.sh.
+# Started by `startx` from ~/.bash_profile on tty1 auto-login.
+#
+# PLACEHOLDER __INSTALL_DIR__ is substituted by install.sh (e.g. /opt/sitrep).
+# =============================================================================
+
+# Disable screen blanking / DPMS power management (X11).
+xset s off     || true
+xset -dpms     || true
+xset s noblank || true
+
+# Hide the mouse cursor when idle, if unclutter is installed (optional).
+command -v unclutter >/dev/null 2>&1 && unclutter -idle 3 &
+
+# Lightweight window manager so Chromium --kiosk gets a proper fullscreen frame.
+openbox &
+
+# Launch and supervise the kiosk browser. kiosk.sh waits for /healthz, starts
+# Chromium --kiosk, and relaunches it if it ever exits.
+exec bash __INSTALL_DIR__/deploy/kiosk.sh

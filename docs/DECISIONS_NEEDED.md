@@ -14,7 +14,9 @@ appended from the sub-agents' findings._
 - [ ] **NWS User-Agent** — set a real contact in `NWS_USER_AGENT` (NWS asks for an identifying contact; no key needed).
 
 ## 2. Source/data confirmations (flagged in CLAUDE.md / PRD as "verify at build")
-- [ ] **SPC feed format** — PRD §7.5 marks the exact SPC convective-outlook endpoint/format as "to confirm at build." See the backend agent's report for how the SPC parser was implemented (live vs. stub) and what needs confirming.
+- [ ] **SPC feed format** — VERIFIED LIVE (2026-06-17): the parser fetches
+  `day{1,2,3}otlk_cat.nolyr.geojson` and the point-in-polygon containment returns
+  correct categorical risk for the metro. No action needed unless SPC changes the feed.
 - [ ] **WFO FFC alert criteria (Verify tier, PRD §12)** — Heat Advisory / Extreme Heat Warning thresholds and the cold-weather (Cold Weather Advisory / Extreme Cold Warning) criteria vary by office. Current config uses the documented Southeast defaults; confirm exact FFC values and adjust `config/config.yaml`.
 - [ ] **Default thresholds set "to taste" (PRD §12 Default tier)** — thunderstorm probability (30%), rain PoP (50%) / QPF (0.25 in), and wind-gust flag (30 mph) are operational defaults in `config.example.yaml`. Confirm against United's risk tolerance.
 
@@ -26,18 +28,22 @@ appended from the sub-agents' findings._
 - [ ] **Location** — currently generic Atlanta metro single point (lat 33.749, lon -84.388) per A1/O1. Site/route geofencing is explicitly v2; confirm the single point is right, or give preferred coordinates.
 
 ## 4. Presentation choices (defaults chosen; change if you have preferences)
-- [ ] **Branding** — no United Consulting logo/colors were supplied; the frontend uses a neutral high-contrast palette. Provide a logo + brand colors if you want them.
+- [x] **Branding** — Real United Consulting logo (`frontend/assets/uc-logo.svg`,
+  top-left) and ZeroHarm safety-program logo (`frontend/assets/zeroharm-logo.svg`,
+  top-right) are installed; date/time is centered in the top bar. The board is now
+  **light mode** (clean, high-contrast, modern sans-serif). Brand blue is the real
+  UC blue (#007BC3) via the `--brand-blue` / `--accent` CSS variables.
 - [ ] **Mode switch time** — defaults to morning until 12:00, afternoon after (config `display.mode_windows`). Adjust to your muster schedule.
 - [ ] **Dwell time** — 12s per slide (config `display.dwell_seconds`).
 
 ## Agent-reported items
 
 ### Backend
-- [ ] **SPC parser is unverified against the live feed.** Implemented against
-  `https://www.spc.noaa.gov/products/outlook/day{1,2,3}otlk_cat.nolyr.geojson`
-  with a point-in-polygon test. These URLs exist but weren't confirmable as
-  stable at build time. If the structure differs, only `backend/sitrep/sources/spc.py`
-  needs updating; it fails closed (`_ok=False`) so other sources are unaffected.
+- [x] **SPC parser — VERIFIED LIVE (2026-06-17).** Fetches
+  `day{1,2,3}otlk_cat.nolyr.geojson`; point-in-polygon containment returns correct
+  categorical risk for the Atlanta metro. Fails closed (`_ok=False`) if SPC changes
+  the feed, so it can never blank the board. NWS live fetch also verified the same
+  day (real FFC Flood Watch + forecast parsed correctly).
 - [ ] **Heat threshold nuance.** Config `hazard_thresholds.heat_index_f.danger`
   is `103` — the NWS heat-index *work band* (firm). NWS issues a *Heat Advisory*
   around a heat index of ~105°F (the "verify against FFC" value). These are two

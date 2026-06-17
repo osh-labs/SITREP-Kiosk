@@ -7,6 +7,54 @@ troubleshoot the Field SITREP Board on the kiosk mini PC.
 
 ---
 
+## 0. Quick start — minimal X kiosk on Ubuntu Server 24.04 (Lenovo 10J0)
+
+The deployment target is a **Lenovo ThinkCentre Tiny (MT-M 10J0)** repurposed as a
+dedicated appliance: a fresh **Ubuntu Server 24.04 LTS** base (no desktop
+environment) running a **minimal X + Openbox** kiosk. This is lighter and more
+deterministic than a full desktop, and it runs on **X11** (so `xset` screen-blank
+disabling works directly — no Wayland quirks).
+
+**Boot flow:** power on → systemd auto-logs the kiosk user into a console on
+**tty1** → `~/.bash_profile` runs `startx` → `~/.xinitrc` starts **Openbox** and
+`kiosk.sh` → `kiosk.sh` waits for the backend `/healthz`, then launches
+**Chromium `--kiosk`** at `http://localhost:8080`. The backend itself runs as a
+systemd service independent of the graphical session.
+
+`install.sh` sets all of this up for you on Ubuntu/apt:
+- Installs `xserver-xorg`, `xinit`, `openbox`, `x11-xserver-utils`,
+  `chromium-browser` (snap), `curl`, `python3-venv`.
+- Creates the kiosk user with the X groups and writes `/etc/X11/Xwrapper.config`.
+- Configures **tty1 console auto-login** (systemd `getty` override) and installs
+  `~/.xinitrc` + `~/.bash_profile`.
+- Installs/enables the backend service.
+
+```bash
+# 1. Install Ubuntu Server 24.04 on the Lenovo (minimal install, OpenSSH optional).
+# 2. As your sudo user on the box:
+sudo apt update && sudo apt install -y git
+sudo git clone -b claude/project-framework-setup-fvehme <REPO_URL> /opt/sitrep
+cd /opt/sitrep
+sudo bash deploy/install.sh --install-dir /opt/sitrep --kiosk-user kiosk
+
+# 3. Put your real API keys in the secrets file, then restart the backend:
+sudo -e /opt/sitrep/.env          # GA511_API_KEY, AIRNOW_API_KEY, ANTHROPIC_API_KEY
+sudo systemctl restart sitrep-backend
+
+# 4. Verify the backend, then reboot to confirm unattended bring-up:
+curl -s localhost:8080/healthz && echo        # expect {"ok":true}
+sudo reboot
+```
+
+After reboot the board should come up full-screen on its own. To test the session
+without rebooting, log in as the kiosk user on tty1 and run `startx`.
+
+> **No display manager / no desktop** is intentional. If you prefer to keep a full
+> desktop instead, you'd re-add an auto-login display manager and a session
+> autostart — but that's heavier and reintroduces Wayland handling.
+
+---
+
 ## Table of Contents
 
 1. [Hardware assumptions](#1-hardware-assumptions)
@@ -17,7 +65,7 @@ troubleshoot the Field SITREP Board on the kiosk mini PC.
 6. [Simulating a source outage (M3 exit criterion)](#6-simulating-a-source-outage-m3-exit-criterion)
 7. [Updating and restarting](#7-updating-and-restarting)
 8. [How reboot survival works](#8-how-reboot-survival-works)
-9. [Autostart — desktop vs. systemd-user](#9-autostart--desktop-vs-systemd-user)
+9. [How the kiosk session starts (minimal X)](#9-how-the-kiosk-session-starts-minimal-x-no-display-manager)
 10. [Troubleshooting](#10-troubleshooting)
 
 ---
@@ -26,17 +74,18 @@ troubleshoot the Field SITREP Board on the kiosk mini PC.
 
 | Item | Assumption |
 |------|------------|
-| Mini PC OS | Debian 12 or Ubuntu 22.04 / 24.04 LTS (64-bit) |
-| Display server | X11 (Wayland works but xset DPMS disabling differs) |
-| Display manager | LightDM, GDM, or SDDM (any that honours `~/.config/autostart`) |
-| Python | 3.11 or 3.12 (install via `apt install python3.11 python3.11-venv`) |
-| Chromium | `chromium` (apt) or `google-chrome-stable` |
+| Mini PC OS | Ubuntu Server 24.04 LTS (64-bit), no desktop environment |
+| Display server | X11 via `startx` (no display manager); `xset` disables blanking directly |
+| Window manager | Openbox (minimal; gives Chromium `--kiosk` a fullscreen frame) |
+| Session start | tty1 console auto-login → `startx` → `~/.xinitrc` |
+| Python | 3.11 or 3.12 (`apt install python3-venv`) |
+| Chromium | `chromium-browser` (snap, installed by `install.sh`) |
 | Network | Internet access for api.weather.gov, SPC, 511ga.org, airnowapi.org, api.anthropic.com |
 | Ports | Nothing exposed externally; backend binds `127.0.0.1:8080` only |
 
-> **Fedora/RHEL note:** package names differ (`chromium` is still correct;
-> `python3.11` may need `dnf install python3.11`). The install script and
-> service unit logic are identical.
+> **Other distros:** the script targets Ubuntu/Debian (`apt`). On Fedora/RHEL/Arch
+> the package names differ but the design (Xorg + Openbox + getty auto-login +
+> startx) is identical.
 
 ---
 
@@ -129,7 +178,8 @@ sudo reboot
 
 After reboot:
 - The backend service starts automatically via systemd.
-- When the kiosk user's desktop session starts, `~/.config/autostart/sitrep-kiosk.desktop` launches `kiosk.sh`.
+- tty1 auto-logs in the kiosk user → `~/.bash_profile` runs `startx` →
+  `~/.xinitrc` starts Openbox and `kiosk.sh`.
 - `kiosk.sh` waits up to 120 s for the backend `/healthz` to respond, then opens Chromium in full-screen kiosk mode.
 
 ---
@@ -419,12 +469,11 @@ Meaning: restart after 5 s, backing off to a maximum of 10 min between
 attempts.  A transient API error or network hiccup does not leave the board
 down permanently.
 
-### 8.2 Kiosk browser — desktop autostart (session-level)
+### 8.2 Kiosk browser — console auto-login + startx (session-level)
 
-The file `~/.config/autostart/sitrep-kiosk.desktop` is processed by the
-desktop session manager (GNOME, XFCE, LXDE, etc.) each time the kiosk user's
-session starts.  Since the display manager is configured for auto-login, this
-runs on every boot.
+tty1 is configured for console auto-login of the kiosk user (systemd `getty`
+override). On login, `~/.bash_profile` runs `startx`, which runs `~/.xinitrc`
+(Openbox + `kiosk.sh`). This happens on every boot with no display manager.
 
 `kiosk.sh` runs in an infinite loop — if Chromium exits for any reason it is
 relaunched after 3 s.
@@ -434,8 +483,8 @@ Together:
 ```
 Boot
  └─ systemd starts sitrep-backend.service (restarts on failure)
- └─ Display manager auto-logs-in kiosk user
-     └─ ~/.config/autostart/sitrep-kiosk.desktop fires kiosk.sh
+ └─ getty@tty1 auto-logs-in the kiosk user
+     └─ ~/.bash_profile runs startx → ~/.xinitrc starts Openbox + kiosk.sh
          └─ kiosk.sh polls /healthz until backend is ready
          └─ Chromium launches in kiosk mode
          └─ If Chromium exits → re-poll /healthz → relaunch
@@ -443,48 +492,29 @@ Boot
 
 ---
 
-## 9. Autostart — desktop vs. systemd-user
+## 9. How the kiosk session starts (minimal X, no display manager)
 
-**Primary (what install.sh sets up): `~/.config/autostart/sitrep-kiosk.desktop`**
+There is **no display manager and no desktop environment**. The graphical kiosk
+comes up through four files that `install.sh` installs:
 
-This is the simpler and more portable approach:
+1. **`/etc/systemd/system/getty@tty1.service.d/override.conf`** — auto-logs the
+   kiosk user into a console on **tty1** (`agetty --autologin <user>`).
+2. **`~/.bash_profile`** (kiosk user) — on the tty1 login, runs `exec startx`.
+   Guarded by `XDG_VTNR=1`, so SSH and other TTYs still get a normal shell.
+3. **`~/.xinitrc`** (kiosk user) — `startx` runs this: disables screen blanking
+   (`xset`), starts **Openbox**, then `exec`s `kiosk.sh`.
+4. **`deploy/kiosk.sh`** — waits for the backend `/healthz`, launches
+   **Chromium `--kiosk`**, and relaunches it if it ever exits.
 
-- Works with any GNOME-compatible display manager (LightDM, GDM, SDDM with GNOME/XFCE session).
-- The XDG autostart specification is honoured by virtually every Linux desktop environment.
-- Fires after the X11/Wayland display session is up, so `DISPLAY` is set correctly when `kiosk.sh` runs.
+To restart just the kiosk browser without rebooting: as the kiosk user on tty1,
+`Ctrl-C` out of (or kill) the session and run `startx` again, or `sudo systemctl
+restart getty@tty1`. The backend service is independent — restart it with
+`sudo systemctl restart sitrep-backend`.
 
-**Alternative: systemd --user unit**
-
-A `systemd --user` unit can also launch the kiosk:
-
-```ini
-# ~/.config/systemd/user/sitrep-kiosk.service
-[Unit]
-Description=SITREP Kiosk browser
-After=graphical-session.target
-Wants=graphical-session.target
-
-[Service]
-ExecStart=/opt/sitrep/deploy/kiosk.sh
-Restart=always
-RestartSec=3
-Environment=DISPLAY=:0
-
-[Install]
-WantedBy=graphical-session.target
-```
-
-Enable with:
-
-```bash
-systemctl --user enable sitrep-kiosk.service
-systemctl --user start  sitrep-kiosk.service
-```
-
-The downside: `graphical-session.target` reaching "active" depends on the
-display manager correctly emitting the `DISPLAY` socket to the user session,
-which varies between LightDM, GDM, and SDDM.  The `.desktop` approach avoids
-this variance.
+**Why not a display manager / desktop autostart?** For a single-purpose appliance,
+a full DE adds overhead, update popups, and (on Ubuntu) Wayland handling. The
+console-autologin + `startx` + Openbox path is lighter, stays on X11, and boots
+straight to the board.
 
 ---
 
@@ -517,16 +547,23 @@ If the connection is refused, the backend is not running.
 If the backend is running but `/healthz` returns an error, check the logs —
 likely a startup exception in the app code.
 
-### Chromium doesn't launch / desktop is blank
+### Chromium doesn't launch / screen is blank
 
 ```bash
-# Check if kiosk.sh is running under the kiosk user's session:
-ps aux | grep kiosk
-# Check if the autostart entry was installed:
-ls -la /home/kiosk/.config/autostart/
-# Run manually as the kiosk user (from a terminal in the kiosk session):
+# Is the X session up and kiosk.sh running?
+ps aux | grep -E 'startx|openbox|kiosk|chrom'
+# Confirm tty1 auto-login override is installed:
+cat /etc/systemd/system/getty@tty1.service.d/override.conf
+# Confirm the session files exist for the kiosk user:
+ls -la /home/kiosk/.xinitrc /home/kiosk/.bash_profile
+# Start the session manually (on tty1 as the kiosk user):
+startx
+# Or run just the browser loop (from within an X session):
 bash /opt/sitrep/deploy/kiosk.sh
 ```
+
+If `startx` fails with a permissions error, confirm
+`/etc/X11/Xwrapper.config` contains `allowed_users=anybody` (install.sh sets this).
 
 If Chromium shows "This site can't be reached", the backend is not ready yet.
 Wait for `kiosk.sh` to finish polling, or check `journalctl -u sitrep-backend`.

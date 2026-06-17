@@ -10,45 +10,47 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Palette — dark background for TV / kiosk legibility */
-  --bg:          #0d0f14;
-  --bg-card:     #161a23;
-  --bg-elevated: #1e2433;
-  --text-primary:   #f0f2f7;
-  --text-secondary: #9ca3b0;
-  --text-muted:     #6b7280;
-  --border:      #2a3040;
-  --accent:      #3b82f6;   /* blue — neutral accent, structural only */
+  /* Palette — LIGHT mode: clean, high-contrast, no low-contrast text */
+  --bg:          #eef1f5;   /* app background — soft light gray */
+  --bg-card:     #ffffff;   /* cards / panels */
+  --bg-elevated: #ffffff;   /* header */
+  --text-primary:   #15212b;  /* near-black — primary text (15.8:1 on white) */
+  --text-secondary: #3f4e5c;  /* dark slate — secondary, still high contrast (8.6:1) */
+  --text-muted:     #51606e;  /* labels — kept dark enough to read (6.4:1) */
+  --border:      #d4dbe4;
+  --accent:      #007bc3;   /* United Consulting brand blue */
+  --brand-blue:  #007bc3;
 
-  /* Severity — color + supplemental label/icon always used together */
-  --sev-info-bg:     #1e2d40;
-  --sev-info-text:   #60b0f0;
-  --sev-info-border: #2a5080;
+  /* Severity — tinted bg + saturated dark text + solid border. Color is
+     supplemental; shape/icon/label text always accompany it. */
+  --sev-info-bg:     #e6f1fb;
+  --sev-info-text:   #0a5ca8;
+  --sev-info-border: #2c7be5;
 
-  --sev-watch-bg:     #1e2a1e;
-  --sev-watch-text:   #4ade80;
-  --sev-watch-border: #166534;
+  --sev-watch-bg:     #e4f3e9;
+  --sev-watch-text:   #1a7a3c;
+  --sev-watch-border: #2e9e54;
 
-  --sev-advisory-bg:     #2a2518;
-  --sev-advisory-text:   #fbbf24;
-  --sev-advisory-border: #92400e;
+  --sev-advisory-bg:     #fbf1d3;
+  --sev-advisory-text:   #8a5a00;
+  --sev-advisory-border: #d99e00;
 
-  --sev-caution-bg:     #2a1f10;
-  --sev-caution-text:   #fb923c;
-  --sev-caution-border: #9a3412;
+  --sev-caution-bg:     #fce6d6;
+  --sev-caution-text:   #9a4500;
+  --sev-caution-border: #e07a1f;
 
-  --sev-danger-bg:     #2a1010;
-  --sev-danger-text:   #f87171;
-  --sev-danger-border: #991b1b;
+  --sev-danger-bg:     #fbe1e1;
+  --sev-danger-text:   #b01717;
+  --sev-danger-border: #d83a3a;
 
-  --sev-extreme-bg:     #200a28;
-  --sev-extreme-text:   #e879f9;
-  --sev-extreme-border: #7e22ce;
+  --sev-extreme-bg:     #f3e2fb;
+  --sev-extreme-text:   #7d1fc7;
+  --sev-extreme-border: #a855f7;
 
   /* Degraded state */
-  --degraded-bg:     #1f1a0a;
-  --degraded-text:   #fde68a;
-  --degraded-border: #78350f;
+  --degraded-bg:     #fbf2d6;
+  --degraded-text:   #7a5200;
+  --degraded-border: #d99e00;
 
   /* Typography scale — generous for across-room reading */
   --fs-xs:   1.0rem;   /* 16px base */
@@ -75,8 +77,8 @@ html, body {
   overflow: hidden;
   background: var(--bg);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
-               Arial, "Liberation Sans", sans-serif;
+  font-family: "Inter", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Helvetica Neue", Arial, "Liberation Sans", sans-serif;
   font-size: 16px;
   line-height: var(--lh-normal);
   -webkit-font-smoothing: antialiased;
@@ -93,31 +95,70 @@ html, body {
 }
 
 /* ── Global header ──────────────────────────────────────────────────── */
+/* Three zones: UC logo (left) · date/time + context (center) · ZeroHarm (right) */
 #global-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0.5rem 2rem;
   background: var(--bg-elevated);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 3px solid var(--brand-blue);
+  box-shadow: 0 1px 4px rgba(15, 33, 43, 0.07);
   flex-shrink: 0;
-  min-height: 3.5rem;
+  min-height: 4.4rem;
   gap: 1rem;
 }
-
-#header-location {
-  font-size: var(--fs-lg);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: var(--text-primary);
-  white-space: nowrap;
+.header-zone {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.header-left   { justify-content: flex-start; }
+.header-right  { justify-content: flex-end; }
+.header-center {
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: center;
 }
 
+/* Brand logos in the corners */
+.brand-logo {
+  height: 3rem;
+  width: auto;
+  max-width: 24rem;
+  display: block;
+}
+#brand-zeroharm { height: 3.3rem; }
+
+/* Centered date / time (primary) */
+#header-datetime {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+/* Location + mode badge sit beneath the clock */
+.header-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+#header-location {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
 #header-mode-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.2rem 0.8rem;
+  padding: 0.12rem 0.7rem;
   border-radius: 99px;
   font-size: var(--fs-sm);
   font-weight: 700;
@@ -125,22 +166,14 @@ html, body {
   text-transform: uppercase;
 }
 #header-mode-badge.morning {
-  background: #1c2a3a;
-  color: #60b0f0;
-  border: 1px solid #2a5080;
+  background: var(--sev-info-bg);
+  color: var(--sev-info-text);
+  border: 1px solid var(--sev-info-border);
 }
 #header-mode-badge.afternoon {
-  background: #2a2518;
-  color: #fbbf24;
-  border: 1px solid #92400e;
-}
-
-#header-datetime {
-  font-size: var(--fs-lg);
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  text-align: right;
+  background: var(--sev-advisory-bg);
+  color: var(--sev-advisory-text);
+  border: 1px solid var(--sev-advisory-border);
 }
 
 /* Status / reconnecting indicator */
@@ -149,11 +182,11 @@ html, body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.3rem 1.5rem;
-  background: #2a1f10;
+  background: var(--sev-advisory-bg);
   border-bottom: 2px solid var(--sev-advisory-border);
   font-size: var(--fs-sm);
   color: var(--sev-advisory-text);
-  font-weight: 600;
+  font-weight: 700;
   flex-shrink: 0;
 }
 #status-bar.visible { display: flex; }
@@ -319,8 +352,8 @@ html, body {
 .degraded-banner .dg-note {
   display: block;
   font-size: var(--fs-sm);
-  font-weight: 500;
-  color: #d4a820;
+  font-weight: 600;
+  color: var(--degraded-text);
   margin-top: 0.2rem;
 }
 
@@ -390,7 +423,7 @@ html, body {
   border-radius: 50%;
   font-size: 0.85em;
   font-weight: 800;
-  background: rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.10);
   flex-shrink: 0;
 }
 
@@ -399,7 +432,43 @@ html, body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  align-items: start;
+  align-items: stretch;
+}
+/* Cards share the look of the 3-Day Look Ahead cards */
+.weather-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(15, 33, 43, 0.06);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem 1.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.weather-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.2rem;
+}
+.weather-card-icon {
+  width: 4.5rem;
+  height: 4.5rem;
+  flex-shrink: 0;
+}
+.weather-card-icon svg { width: 100%; height: 100%; }
+.weather-card-summary {
+  font-size: var(--fs-lg);
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 0.3rem;
+}
+.weather-hilo {
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
 }
 .weather-section-label {
   font-size: var(--fs-sm);
@@ -407,7 +476,6 @@ html, body {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: 0.5rem;
 }
 .weather-temp-primary {
   font-size: var(--fs-3xl);
@@ -495,8 +563,10 @@ html, body {
   gap: 0.7rem;
   padding: 0.6rem 1rem;
   background: var(--bg-card);
+  border: 1px solid var(--border);
   border-left: 5px solid var(--border);
   border-radius: 0 var(--radius) var(--radius) 0;
+  box-shadow: 0 1px 3px rgba(15, 33, 43, 0.06);
   font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--text-primary);
@@ -542,6 +612,7 @@ html, body {
 .forecast-day-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(15, 33, 43, 0.06);
   border-radius: var(--radius-lg);
   padding: 1.4rem 1.2rem;
   display: flex;
@@ -595,12 +666,12 @@ html, body {
   flex-shrink: 0;
 }
 /* SPC category colors — color + label always used together */
-.spc-general  { background: #1a1a2e; border: 2px solid #3a3a5c; color: #9ca3b0; }
-.spc-marginal { background: #1a2510; border: 2px solid #4a6a20; color: #86d45e; }
-.spc-slight   { background: #2a2000; border: 2px solid #806000; color: #ffd54f; }
-.spc-enhanced { background: #1e1000; border: 2px solid #7a3000; color: #ff9843; }
-.spc-moderate { background: #200000; border: 2px solid #7a0000; color: #ff6060; }
-.spc-high     { background: #10001e; border: 2px solid #5a0060; color: #e879f9; }
+.spc-general  { background: #eef1f5; border: 2px solid #c3ccd6; color: #3f4e5c; }
+.spc-marginal { background: #e4f3e9; border: 2px solid #79bf91; color: #1a7a3c; }
+.spc-slight   { background: #fbf2d6; border: 2px solid #ddc04a; color: #7a5600; }
+.spc-enhanced { background: #fce6d6; border: 2px solid #ef9a4a; color: #9a4500; }
+.spc-moderate { background: #fbe1e1; border: 2px solid #e07a7a; color: #b01717; }
+.spc-high     { background: #f3e2fb; border: 2px solid #c77ae0; color: #7d1fc7; }
 
 /* ── Slide 5: PM Commute ────────────────────────────────────────────── */
 .commute-now-row {
