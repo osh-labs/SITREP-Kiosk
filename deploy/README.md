@@ -7,6 +7,42 @@ troubleshoot the Field SITREP Board on the kiosk mini PC.
 
 ---
 
+## 0. Quick start — Ubuntu Desktop 24.04 (target hardware: Lenovo 10J0)
+
+The verified deployment target is a **Lenovo ThinkCentre Tiny (MT-M 10J0)** running
+**Ubuntu Desktop 24.04 LTS (GNOME / Wayland)**. On this platform `install.sh` now
+handles the OS-specific bits for you:
+
+- Installs `chromium-browser` (the Chromium **snap**), `curl`, `python3-venv`, and
+  `x11-xserver-utils` via `apt`.
+- Enables **GDM3 auto-login** for the kiosk user (so the board returns unattended
+  after a power loss) by editing `/etc/gdm3/custom.conf` (a backup is saved).
+- Skips the GNOME first-login wizard for the kiosk user.
+- `kiosk.sh` disables screen blanking via **gsettings** (Wayland) as well as `xset`
+  (X11), and launches Chromium with `--ozone-platform-hint=auto`.
+
+```bash
+# On the Lenovo, as your normal sudo user:
+sudo apt update && sudo apt install -y git
+sudo git clone <REPO_URL> /opt/sitrep        # or copy the repo to /opt/sitrep
+cd /opt/sitrep
+sudo bash deploy/install.sh --install-dir /opt/sitrep --kiosk-user kiosk
+
+# Put your real API keys in the secrets file, then restart the backend:
+sudo -e /opt/sitrep/.env                     # GA511_API_KEY, AIRNOW_API_KEY, ANTHROPIC_API_KEY
+sudo systemctl restart sitrep-backend
+
+# Verify, then reboot to confirm unattended bring-up:
+curl -s localhost:8080/healthz && echo
+sudo reboot
+```
+
+After reboot the box should auto-login as `kiosk`, the GNOME session starts, and the
+kiosk autostart entry launches Chromium full-screen at `http://localhost:8080` once
+`/healthz` is green. The sections below cover everything in detail.
+
+---
+
 ## Table of Contents
 
 1. [Hardware assumptions](#1-hardware-assumptions)

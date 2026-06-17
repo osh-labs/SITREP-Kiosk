@@ -96,6 +96,32 @@ info "KIOSK_USER  : ${KIOSK_USER}"
 info "VENV_DIR    : ${VENV_DIR}"
 info "Repo root   : ${REPO_ROOT}"
 
+# ── 0b. Install required OS packages (Debian/Ubuntu) ─────────────────────────
+step "Installing required OS packages"
+if command -v apt-get &>/dev/null; then
+    PKGS=()
+    command -v curl &>/dev/null            || PKGS+=(curl)
+    python3 -m venv --help &>/dev/null     || PKGS+=(python3-venv)
+    command -v xset &>/dev/null            || PKGS+=(x11-xserver-utils)
+    if ! command -v chromium &>/dev/null && ! command -v chromium-browser &>/dev/null \
+         && ! command -v google-chrome &>/dev/null; then
+        PKGS+=(chromium-browser)   # Ubuntu 24.04: this pulls the Chromium snap
+    fi
+    if (( ${#PKGS[@]} > 0 )); then
+        info "Installing: ${PKGS[*]}"
+        apt-get update -qq || warn "apt-get update failed (continuing)"
+        if apt-get install -y "${PKGS[@]}"; then
+            success "Installed: ${PKGS[*]}"
+        else
+            warn "apt-get install failed; install manually: ${PKGS[*]}"
+        fi
+    else
+        success "All required OS packages already present"
+    fi
+else
+    warn "apt-get not found — ensure python3-venv, chromium, curl, x11-xserver-utils are installed."
+fi
+
 # ── 1. Prerequisite checks ────────────────────────────────────────────────────
 step "Checking prerequisites"
 
@@ -292,6 +318,11 @@ fi
 
 mkdir -p "${AUTOSTART_DIR}"
 
+# Skip the GNOME first-login setup wizard for the kiosk user so the desktop
+# (and therefore the kiosk autostart) comes up clean on the very first login.
+echo "yes" > "${KIOSK_HOME}/.config/gnome-initial-setup-done"
+chown "${KIOSK_USER}:${KIOSK_USER}" "${KIOSK_HOME}/.config/gnome-initial-setup-done"
+
 DESKTOP_DEST="${AUTOSTART_DIR}/sitrep-kiosk.desktop"
 
 # Substitute __INSTALL_DIR__ placeholder
@@ -308,6 +339,35 @@ else
     chown -R "${KIOSK_USER}:${KIOSK_USER}" "${KIOSK_HOME}/.config"
     chmod 644 "${DESKTOP_DEST}"
     success "Installed ${DESKTOP_DEST}"
+fi
+
+# ── 7b. GDM auto-login ────────────────────────────────────────────────────────
+# The board must come back unattended after a power loss (NFR-2). On Ubuntu
+# Desktop (GDM3) that means enabling auto-login for the kiosk user.
+step "Configuring GDM auto-login for '${KIOSK_USER}'"
+GDM_CONF="/etc/gdm3/custom.conf"
+if [[ -d /etc/gdm3 ]]; then
+    [[ -f "${GDM_CONF}" && ! -f "${GDM_CONF}.sitrep.bak" ]] && cp "${GDM_CONF}" "${GDM_CONF}.sitrep.bak"
+    # Edit the [daemon] section idempotently with Python's configparser.
+    python3 - "${GDM_CONF}" "${KIOSK_USER}" <<'PYEOF'
+import sys, os, configparser
+conf, user = sys.argv[1], sys.argv[2]
+cp = configparser.ConfigParser()
+cp.optionxform = str
+if os.path.exists(conf):
+    cp.read(conf)
+if not cp.has_section("daemon"):
+    cp.add_section("daemon")
+cp.set("daemon", "AutomaticLoginEnable", "true")
+cp.set("daemon", "AutomaticLogin", user)
+with open(conf, "w") as fh:
+    cp.write(fh)
+PYEOF
+    success "Auto-login enabled for '${KIOSK_USER}' in ${GDM_CONF} (backup: ${GDM_CONF}.sitrep.bak)"
+    info "A Wayland GNOME session will auto-start and fire the kiosk autostart entry."
+else
+    warn "GDM3 not found (/etc/gdm3 missing). Enable auto-login for '${KIOSK_USER}'"
+    warn "in your display manager manually — see deploy/README.md."
 fi
 
 # ── 8. Make kiosk.sh executable ───────────────────────────────────────────────
