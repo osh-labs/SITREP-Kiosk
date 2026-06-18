@@ -112,15 +112,23 @@ const SPC_LABELS = {
   high:     'High Risk',
 };
 
-/* CARTO / OSM / Esri dark base tile choices (keyless) */
+/* CARTO / OSM base tile choices (keyless) */
 const BASE_TILES = {
+  voyager: {
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
+  },
   dark: {
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap, &copy; CARTO' },
+    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
   },
-  esri_dark: {
+  dark_nolabels: {
     url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
-    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap, &copy; CARTO' },
+    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
+  },
+  light: {
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
   },
   osm: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',

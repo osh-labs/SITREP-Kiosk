@@ -341,7 +341,7 @@
     "default_zoom": 8,
     "min_zoom": 6,
     "max_zoom": 10,
-    "base_style": "dark",
+    "base_style": "voyager",
     "layers": {
       "radar": {
         "default_on": true,

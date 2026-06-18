@@ -28,7 +28,7 @@ weather_map:
   default_zoom: 8
   min_zoom: 6
   max_zoom: 10
-  base_style: dark                # dark | osm | esri_dark
+  base_style: voyager             # voyager | dark | dark_nolabels | light | osm
   layers:
     radar:  { default_on: true, opacity: 0.7 }
     alerts: { default_on: true }
