@@ -508,15 +508,15 @@ html, body {
 /* Temperature view markers — colored city pills, legible across the room. */
 .temp-dot { background: none; border: none; }
 .temp-dot span {
-  display: inline-flex; align-items: baseline; gap: 0.3rem;
+  display: inline-flex; flex-direction: column; align-items: center;
   transform: translate(-50%, -50%);
-  padding: 0.15rem 0.5rem; border-radius: 999px;
-  line-height: 1.1; color: #0a0e14;
+  padding: 0.25rem 0.6rem; border-radius: var(--radius);
+  line-height: 1.05; color: #0a0e14; opacity: 0.75;
   border: 1px solid rgba(0, 0, 0, 0.35);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); white-space: nowrap;
 }
 .temp-dot b     { font-size: var(--fs-lg); font-weight: 800; }
-.temp-dot small { font-size: var(--fs-sm); font-weight: 700; opacity: 0.85; }
+.temp-dot small { font-size: var(--fs-sm); font-weight: 700; opacity: 0.9; }
 
 .leaflet-container { background: #0a0e14; }
 .leaflet-control-attribution {
