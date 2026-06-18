@@ -188,32 +188,47 @@ function val(v, suffix = '') {
   return esc(String(v)) + (suffix ? esc(suffix) : '');
 }
 
-/** Format an ISO-8601 timestamp as HH:MM (same day) or "Mon D HH:MM". */
+/* All time display is locked to Eastern time (America/New_York) so the board
+   shows the correct local time regardless of the server/OS timezone. Intl
+   handles EDT/EST transitions automatically. */
+const DISPLAY_TZ = 'America/New_York';
+
+/** Extract named date/time parts for a Date in the display timezone. */
+function tzParts(date, opts) {
+  return new Intl.DateTimeFormat('en-US', { timeZone: DISPLAY_TZ, ...opts })
+    .formatToParts(date)
+    .reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+}
+
+/** HH:MM string (24-hour, Eastern) for a Date. */
+function tzHHMM(date) {
+  const p = tzParts(date, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  return `${p.hour}:${p.minute}`;
+}
+
+/** YYYY-MM-DD string (Eastern) for same-day comparisons. */
+function tzDateKey(date) {
+  const p = tzParts(date, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+/** Format an ISO-8601 timestamp as HH:MM (same day) or "Mon D HH:MM" in Eastern time. */
 function fmtTime(isoStr) {
   if (!isoStr) return '&mdash;';
   try {
     const d = new Date(isoStr);
-    const now = new Date();
-    const sameDay = d.getFullYear() === now.getFullYear()
-      && d.getMonth() === now.getMonth()
-      && d.getDate() === now.getDate();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    if (sameDay) return `${hh}:${mm}`;
-    const mon = d.toLocaleString('en-US', { month: 'short' });
-    return `${mon} ${d.getDate()} ${hh}:${mm}`;
+    if (tzDateKey(d) === tzDateKey(new Date())) return tzHHMM(d);
+    const p = tzParts(d, { month: 'short', day: 'numeric' });
+    return `${p.month} ${p.day} ${tzHHMM(d)}`;
   } catch (e) {
     return esc(isoStr);
   }
 }
 
-/** Short HH:MM from an ISO timestamp (used for sunrise/sunset). */
+/** Short HH:MM (Eastern) from an ISO timestamp (used for sunrise/sunset, chart ticks). */
 function hhmm(isoStr) {
   if (!isoStr) return null;
-  try {
-    const d = new Date(isoStr);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  } catch (e) { return null; }
+  try { return tzHHMM(new Date(isoStr)); } catch (e) { return null; }
 }
 
 /** Human-readable age string from age_seconds or last_good_at. */
@@ -346,9 +361,7 @@ function renderOverallRisk(state) {
 function renderNextUpdate(state) {
   const refresh = ((state.display || {}).refresh_seconds) || DEFAULT_REFRESH_S;
   const next = new Date(Date.now() + refresh * 1000);
-  const hh = String(next.getHours()).padStart(2, '0');
-  const mm = String(next.getMinutes()).padStart(2, '0');
-  $nextUpdate.textContent = `Next ~${hh}:${mm}`;
+  $nextUpdate.textContent = `Next ~${tzHHMM(next)}`;
 }
 
 function renderSummary(state) {
@@ -788,11 +801,11 @@ function renderDashboard(state) {
 function startClock() {
   function tick() {
     const now = new Date();
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const mons = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    $datetime.textContent = `${days[now.getDay()]} ${now.getDate()} ${mons[now.getMonth()]}  ${hh}:${mm}`;
+    const p = tzParts(now, {
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    });
+    $datetime.textContent = `${p.weekday} ${p.day} ${p.month}  ${p.hour}:${p.minute}`;
   }
   tick();
   clockTimer = setInterval(tick, 10000);
