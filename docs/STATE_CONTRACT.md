@@ -183,6 +183,9 @@ A `source` block:
   interstate closure > interstate accident > state-road closure > state-road
   accident > everything else (with more important roads floating up within the
   tail). Computed in code from the road name + event type — never by the model.
+  "Interstate" is matched against the authoritative Georgia route list in
+  `config.traffic.interstate_routes`; business routes (e.g. "I-75 BUS") are
+  downgraded to the major-state-road tier.
 - **`display.mode`** is `"morning"` or `"afternoon"`, computed by the backend
   from config mode windows. Morning slide set: Briefing, Weather, Disruptions,
   3-Day. Afternoon set: Weather, PM Commute (`commute`), 3-Day.

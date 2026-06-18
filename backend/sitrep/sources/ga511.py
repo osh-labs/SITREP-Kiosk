@@ -30,8 +30,10 @@ log = logging.getLogger(__name__)
 # 511GA REST API base
 _BASE_URL = "https://511ga.org/api/v2"
 
-# Fallback road-classification patterns (overridable via config.traffic).
-_DEFAULT_INTERSTATE_PATTERNS = [r"\bI[- ]?\d+\b", r"\binterstate\b"]
+# Fallbacks (overridable via config.traffic). Georgia's Interstate system —
+# 7 primary + 8 auxiliary — per the List of Interstate Highways in Georgia.
+_DEFAULT_INTERSTATE_ROUTES = [16, 20, 24, 59, 75, 85, 95, 185, 285, 475, 516, 520, 575, 675, 985]
+_DEFAULT_BUSINESS_MARKERS = ["BUS", "BUSINESS"]
 _DEFAULT_STATE_ROAD_PATTERNS = [
     r"\bUS[- ]?\d+\b",
     r"\bSR[- ]?\d+\b",
@@ -64,9 +66,34 @@ def _compile(patterns: Any, fallback: list[str]) -> list[re.Pattern]:
     return compiled
 
 
-def _road_class(text: str, interstate: list[re.Pattern], state: list[re.Pattern]) -> int:
-    """Grade a road by importance from its name/text. Interstate beats state."""
-    if any(p.search(text) for p in interstate):
+def _build_interstate_re(routes: Any) -> re.Pattern:
+    """One regex matching any of the configured GA interstate numbers (I-75, I 285)."""
+    nums = routes if isinstance(routes, list) and routes else _DEFAULT_INTERSTATE_ROUTES
+    alt = "|".join(str(int(n)) for n in nums)
+    return re.compile(rf"\bI[- ]?(?:{alt})\b", re.I)
+
+
+def _build_business_re(markers: Any) -> re.Pattern:
+    """Regex for interstate business routes, e.g. 'I-75 BUS', 'I-95 Business'."""
+    marks = markers if isinstance(markers, list) and markers else _DEFAULT_BUSINESS_MARKERS
+    alt = "|".join(re.escape(str(m)) for m in marks)
+    return re.compile(rf"\bI[- ]?\d+\s*(?:{alt})\b", re.I)
+
+
+def _road_class(
+    text: str,
+    interstate: re.Pattern,
+    business: re.Pattern,
+    state: list[re.Pattern],
+) -> int:
+    """
+    Grade a road by importance from its name/text. Business routes are checked
+    first so an "I-75 BUS" is treated as a major state road, not a full
+    interstate. Otherwise interstate beats state beats everything else.
+    """
+    if business.search(text):
+        return _ROAD_STATE
+    if interstate.search(text):
         return _ROAD_INTERSTATE
     if any(p.search(text) for p in state):
         return _ROAD_STATE
@@ -175,10 +202,8 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         events = []
 
     # Road-classification patterns (config-overridable).
-    interstate_re = _compile(
-        config.get("traffic", "interstate_patterns", default=None),
-        _DEFAULT_INTERSTATE_PATTERNS,
-    )
+    interstate_re = _build_interstate_re(config.get("traffic", "interstate_routes", default=None))
+    business_re = _build_business_re(config.get("traffic", "business_route_markers", default=None))
     state_re = _compile(
         config.get("traffic", "state_road_patterns", default=None),
         _DEFAULT_STATE_ROAD_PATTERNS,
@@ -206,7 +231,7 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
             })
         else:
             etype = _classify_event(event_type, subtype)
-            road_class = _road_class(text, interstate_re, state_re)
+            road_class = _road_class(text, interstate_re, business_re, state_re)
             traffic_items.append({
                 "text": text,
                 "type": etype,

@@ -11,13 +11,39 @@ def _cfg():
 
 # ── unit: road classification + priority tiers ───────────────────────────────
 
-def test_road_class_interstate_beats_state():
-    inter = ga511._compile(None, ga511._DEFAULT_INTERSTATE_PATTERNS)
+def _classifiers():
+    inter = ga511._build_interstate_re(None)
+    biz = ga511._build_business_re(None)
     state = ga511._compile(None, ga511._DEFAULT_STATE_ROAD_PATTERNS)
-    assert ga511._road_class("I-285 SB @ Camp Creek", inter, state) == ga511._ROAD_INTERSTATE
-    assert ga511._road_class("SR-400 NB ramp", inter, state) == ga511._ROAD_STATE
-    assert ga511._road_class("US-78 @ Main St", inter, state) == ga511._ROAD_STATE
-    assert ga511._road_class("Peachtree St @ 10th", inter, state) == ga511._ROAD_OTHER
+    return inter, biz, state
+
+
+def test_road_class_interstate_beats_state():
+    inter, biz, state = _classifiers()
+    rc = lambda t: ga511._road_class(t, inter, biz, state)
+    assert rc("I-285 SB @ Camp Creek") == ga511._ROAD_INTERSTATE
+    assert rc("I 75 NB @ MM 251") == ga511._ROAD_INTERSTATE
+    assert rc("SR-400 NB ramp") == ga511._ROAD_STATE
+    assert rc("US-78 @ Main St") == ga511._ROAD_STATE
+    assert rc("Peachtree St @ 10th") == ga511._ROAD_OTHER
+
+
+def test_only_georgia_interstate_numbers_match():
+    inter, biz, state = _classifiers()
+    rc = lambda t: ga511._road_class(t, inter, biz, state)
+    # I-99 is not a Georgia interstate, so it must not get the interstate tier
+    assert rc("I-99 @ nowhere") == ga511._ROAD_OTHER
+    # 516 must match as itself, not be shadowed by the bare 16
+    assert rc("I-516 EB @ Savannah") == ga511._ROAD_INTERSTATE
+
+
+def test_business_routes_drop_to_state_tier():
+    inter, biz, state = _classifiers()
+    rc = lambda t: ga511._road_class(t, inter, biz, state)
+    assert rc("I-75 BUS @ Tifton") == ga511._ROAD_STATE
+    assert rc("I-95 Business @ Brunswick") == ga511._ROAD_STATE
+    # a real interstate event with "bus stop" nearby is NOT a business route
+    assert rc("I-75 NB @ bus depot") == ga511._ROAD_INTERSTATE
 
 
 def test_priority_follows_proposed_hierarchy():
@@ -76,6 +102,18 @@ def test_fetch_sorts_traffic_worst_first(monkeypatch):
     # priorities are non-increasing
     prios = [t["priority"] for t in out["traffic"]]
     assert prios == sorted(prios, reverse=True)
+
+
+def test_fetch_business_route_ranks_as_state_road(monkeypatch):
+    monkeypatch.setenv("GA511_API_KEY", "test-key")
+    events = [
+        {"RoadwayName": "I-75 BUS", "EventType": "Closure"},      # tier 3 (state closure)
+        {"RoadwayName": "I-85", "EventType": "Crash"},            # tier 2 (interstate accident)
+    ]
+    out = ga511.fetch(_Client(events), _cfg())
+    roads = [t["text"].split()[0] for t in out["traffic"]]
+    # the real interstate accident outranks the business-route closure
+    assert roads == ["I-85", "I-75"]
 
 
 def test_fetch_stable_within_same_priority(monkeypatch):
