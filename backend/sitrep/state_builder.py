@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 from . import astro as astro_module
 from .models import (
@@ -40,7 +41,7 @@ log = logging.getLogger(__name__)
 
 
 def _compute_display_mode(config: Any) -> str:
-    """Return 'morning' or 'afternoon' based on current local time vs config."""
+    """Return 'morning' or 'afternoon' based on current time in the configured timezone."""
     morning_until = config.morning_until  # e.g. "12:00"
     try:
         h, m = morning_until.split(":")
@@ -48,7 +49,12 @@ def _compute_display_mode(config: Any) -> str:
     except Exception:
         cutoff_minutes = 12 * 60
 
-    now_local = datetime.now().time()
+    try:
+        tz = ZoneInfo(config.timezone)
+    except Exception:
+        tz = ZoneInfo("America/New_York")
+
+    now_local = datetime.now(tz=tz).time()
     now_minutes = now_local.hour * 60 + now_local.minute
     return "morning" if now_minutes < cutoff_minutes else "afternoon"
 
