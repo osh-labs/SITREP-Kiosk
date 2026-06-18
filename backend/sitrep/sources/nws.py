@@ -108,14 +108,24 @@ def _icon_from_summary(summary: str) -> str:
 def _alert_severity(event: str) -> str:
     """Map NWS event name to severity vocab."""
     ev = event.lower()
-    if any(k in ev for k in ("tornado warning", "flash flood warning", "severe thunderstorm warning",
-                              "ice storm warning", "extreme cold warning")):
+    # Specific high-impact warnings → extreme (purple)
+    if any(k in ev for k in ("flash flood warning", "ice storm warning", "extreme cold warning")):
         return "extreme"
-    if any(k in ev for k in ("warning",)):
+    # Specific warnings → danger (red)
+    if any(k in ev for k in ("tornado warning", "severe thunderstorm warning", "flood warning")):
         return "danger"
-    if any(k in ev for k in ("watch",)):
+    # Specific watches — tornado most dangerous → caution (orange)
+    if any(k in ev for k in ("tornado watch", "flash flood watch")):
+        return "caution"
+    # Less urgent watches → advisory (yellow)
+    if any(k in ev for k in ("severe thunderstorm watch", "flood watch")):
+        return "advisory"
+    # Generic fallbacks
+    if "warning" in ev:
+        return "danger"
+    if "watch" in ev:
         return "watch"
-    if any(k in ev for k in ("advisory",)):
+    if "advisory" in ev:
         return "advisory"
     return "info"
 
