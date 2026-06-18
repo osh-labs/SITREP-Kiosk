@@ -209,11 +209,13 @@
     "traffic": [
       {
         "text": "I-20 EB \u2014 heavy, about +18 min",
-        "type": "congestion"
+        "type": "congestion",
+        "priority": 2
       },
       {
         "text": "GA-400 SB \u2014 incident @ Northridge",
-        "type": "incident"
+        "type": "incident",
+        "priority": 1
       }
     ],
     "source": {
@@ -229,11 +231,13 @@
     "traffic": [
       {
         "text": "I-285 WB @ Ashford-Dunwoody \u2014 crash, 2 lanes blocked",
-        "type": "crash"
+        "type": "crash",
+        "priority": 40
       },
       {
         "text": "I-75 NB @ MM 251 \u2014 construction, delays",
-        "type": "construction"
+        "type": "construction",
+        "priority": 2
       }
     ],
     "alerts": [

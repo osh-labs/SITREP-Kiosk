@@ -85,3 +85,19 @@ def test_build_state_without_openmeteo_is_safe():
     ).to_dict()
     assert state["weather"]["hourly"] == []
     assert state["weather"]["today"]["sunrise"] is None
+
+
+def test_traffic_events_sorts_and_caps():
+    ga511_data = {
+        "traffic": [
+            {"text": "Local St", "type": "construction", "priority": 0},
+            {"text": "I-75 NB", "type": "closure", "priority": 50},
+            {"text": "SR-400", "type": "crash", "priority": 20},
+        ],
+    }
+    # worst first, capped to 2
+    items = state_builder._traffic_events(ga511_data, max_events=2)
+    assert [t.text for t in items] == ["I-75 NB", "SR-400"]
+    # max_events None / 0 keeps the full (sorted) list
+    assert len(state_builder._traffic_events(ga511_data, None)) == 3
+    assert len(state_builder._traffic_events(ga511_data, 0)) == 3

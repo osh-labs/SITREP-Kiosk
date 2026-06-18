@@ -125,6 +125,29 @@ _DEFAULTS: dict[str, Any] = {
         "rain",
         "wind",
     ],
+    # 511GA traffic prioritization. Events are ranked deterministically so the
+    # board leads with the worst disruptions and lets minor ones slide off.
+    "traffic": {
+        "max_events": 6,   # show at most this many; lower-priority items drop off
+        # Authoritative Georgia Interstate route numbers (7 primary + 8 auxiliary)
+        # per the List of Interstate Highways in Georgia. A match = top tier.
+        "interstate_routes": [
+            16, 20, 24, 59, 75, 85, 95,          # primary
+            185, 285, 475, 516, 520, 575, 675, 985,  # auxiliary
+        ],
+        # Business routes (e.g. "I-75 BUS") are NOT full interstates — they fall
+        # to the major-state-road tier (priority 3 in the hierarchy).
+        "business_route_markers": ["BUS", "BUSINESS"],
+        # Case-insensitive regexes used to grade a major state road.
+        "state_road_patterns": [
+            r"\bUS[- ]?\d+\b",
+            r"\bSR[- ]?\d+\b",
+            r"\bGA[- ]?\d+\b",
+            r"\bstate route\b",
+            r"\bhwy\b",
+            r"\bhighway\b",
+        ],
+    },
 }
 
 

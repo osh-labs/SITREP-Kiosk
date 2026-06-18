@@ -101,16 +101,16 @@ A `source` block:
   "commute": {
     "current": { "temp_f": 91, "feels_like_f": 99, "summary": "Storms ending ~6 PM" },
     "traffic": [
-      { "text": "I-20 EB — heavy, about +18 min", "type": "congestion" },
-      { "text": "GA-400 SB — incident @ Northridge", "type": "incident" }
+      { "text": "I-20 EB — heavy, about +18 min", "type": "congestion", "priority": 2 },
+      { "text": "GA-400 SB — incident @ Northridge", "type": "incident", "priority": 1 }
     ],
     "source": { "name": "NWS, 511GA", "ok": true, "stale": false, "fetched_at": "2026-06-13T15:19:00-04:00", "age_seconds": 60, "last_good_at": "2026-06-13T15:19:00-04:00" }
   },
 
   "disruptions": {
     "traffic": [
-      { "text": "I-285 WB @ Ashford-Dunwoody — crash, 2 lanes blocked", "type": "crash" },
-      { "text": "I-75 NB @ MM 251 — construction, delays", "type": "construction" }
+      { "text": "I-285 WB @ Ashford-Dunwoody — crash, 2 lanes blocked", "type": "crash", "priority": 40 },
+      { "text": "I-75 NB @ MM 251 — construction, delays", "type": "construction", "priority": 2 }
     ],
     "alerts": [
       { "text": "Heat Advisory — metro-wide, until 8 PM", "event": "Heat Advisory", "severity": "advisory" }
@@ -176,6 +176,16 @@ A `source` block:
   (PRD NFR-7).
 - **`hazards.ranked`** is the D5 priority order, highest first; it decides what
   the briefing leads with. `aqi_callout` is separate (may be `null`).
+- **`*.traffic[]`** (511GA) carries `type` (`crash | congestion | construction |
+  incident | closure | other`) and a deterministic `priority` (higher = worse).
+  Lists are sorted worst-first and capped to `traffic.max_events` so minor
+  problems slide out of view. Ranked hierarchy, most to least important:
+  interstate closure > interstate accident > state-road closure > state-road
+  accident > everything else (with more important roads floating up within the
+  tail). Computed in code from the road name + event type — never by the model.
+  "Interstate" is matched against the authoritative Georgia route list in
+  `config.traffic.interstate_routes`; business routes (e.g. "I-75 BUS") are
+  downgraded to the major-state-road tier.
 - **`display.mode`** is `"morning"` or `"afternoon"`, computed by the backend
   from config mode windows. Morning slide set: Briefing, Weather, Disruptions,
   3-Day. Afternoon set: Weather, PM Commute (`commute`), 3-Day.

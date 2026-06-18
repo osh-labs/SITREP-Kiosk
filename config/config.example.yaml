@@ -68,6 +68,30 @@ hazard_thresholds:
   winter:                            # triggers firm; values verify against FFC
     temp_f_with_precip: 32
 
+# 511GA traffic prioritization. Events are ranked deterministically (in code,
+# not by the model) so the board leads with the worst disruptions and lets
+# minor problems slide out of view. Ranked hierarchy, most to least important:
+#   1. Interstate closure   2. Interstate major accident
+#   3. State-road closure   4. State-road major accident   5. everything else
+traffic:
+  max_events: 6                  # show at most this many; the rest drop off
+  # Authoritative Georgia Interstate route numbers — 7 primary + 8 auxiliary —
+  # from en.wikipedia.org/wiki/List_of_Interstate_Highways_in_Georgia. A match on
+  # any of these (e.g. "I-285", "I 75") is top-tier. I-420 is omitted: it was an
+  # unbuilt designation, never constructed in Georgia.
+  interstate_routes: [16, 20, 24, 59, 75, 85, 95, 185, 285, 475, 516, 520, 575, 675, 985]
+  # Business routes ("I-75 BUS", "I-95 Business") are NOT full interstates — they
+  # rank at the major-state-road tier (priority 3 in the hierarchy below).
+  business_route_markers: ['BUS', 'BUSINESS']
+  # Case-insensitive regexes that grade a major state road from its name/text.
+  state_road_patterns:
+    - '\bUS[- ]?\d+\b'          # US-78, US 19
+    - '\bSR[- ]?\d+\b'          # SR-400
+    - '\bGA[- ]?\d+\b'          # GA-400
+    - '\bstate route\b'
+    - '\bhwy\b'
+    - '\bhighway\b'
+
 # D5 ranking, highest first. AQI is handled as a separate callout, not ranked here.
 ranking_order:
   - severe_weather
