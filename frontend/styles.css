@@ -450,7 +450,7 @@ html, body {
 /* Smooth the opacity swap between radar frames so any remaining timing
    variance doesn't produce a hard flash. Base-map opacity never changes
    so this transition only fires on radar layer switches. */
-.leaflet-tile-pane > div { transition: opacity 0.1s linear; }
+.leaflet-tile-pane > div { transition: opacity 0.3s ease-in-out; }
 
 /* ── Map controls / Leaflet dark tweaks ─────────────────────────────── */
 .map-toggle {
