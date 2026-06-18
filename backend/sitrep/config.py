@@ -187,6 +187,10 @@ class Config:
         return self.display["mode_windows"].get("morning_until", "12:00")
 
     @property
+    def timezone(self) -> str:
+        return str(self._data.get("weather", {}).get("timezone", "America/New_York"))
+
+    @property
     def work_start(self) -> str:
         return self.display["work_hours"].get("start", "06:00")
 
