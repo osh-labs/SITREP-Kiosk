@@ -652,8 +652,15 @@ function alertSeverityFromProps(props) {
   if (/severe thunderstorm warning/.test(ev))  return 'danger';   // red
   if (/tornado watch/.test(ev))                return 'caution';  // orange
   if (/severe thunderstorm watch/.test(ev))    return 'advisory'; // yellow
+  // Flash flood — warning stays extreme, watch is orange
+  if (/flash flood warning/.test(ev))          return 'extreme';  // purple
+  if (/flash flood watch/.test(ev))            return 'caution';  // orange
+  // Regular flood events
+  if (/flood warning/.test(ev))               return 'danger';   // red
+  if (/flood watch/.test(ev))                 return 'advisory'; // yellow
+  if (/flood advisory/.test(ev))              return 'advisory'; // yellow
   // Other high-impact warnings stay extreme (purple)
-  if (/(flash flood warning|ice storm warning|extreme)/.test(ev)) return 'extreme';
+  if (/(ice storm warning|extreme)/.test(ev)) return 'extreme';
   if (ev.includes('warning')) return 'danger';
   if (ev.includes('watch')) return 'watch';
   if (ev.includes('advisory')) return 'advisory';

@@ -89,6 +89,9 @@ def _check_severe_weather(
         "tornado warning", "tornado watch",
         "severe thunderstorm warning", "severe thunderstorm watch",
         "flash flood warning", "flash flood watch",
+        "flood warning", "flood watch", "flood advisory",
+        "coastal flood warning", "coastal flood watch", "coastal flood advisory",
+        "river flood warning", "river flood watch",
     ]
     alert_hit = _first_alert_with(alerts, *severe_events)
 
