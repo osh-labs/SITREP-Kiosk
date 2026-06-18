@@ -174,10 +174,13 @@ html, body {
 }
 .dash-col { display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; overflow: hidden; }
 .dash-col-center { overflow: hidden; }
-/* Afternoon: the left column is PM Commute (60%) over Briefing (40%) so traffic
-   gets the room. (flex-basis 0 + grow ratio splits the column height.) */
-.mode-afternoon .dash-col-left > #card-activity { flex: 3 1 0; }
-.mode-afternoon .dash-col-left > #card-summary  { flex: 2 1 0; }
+/* Afternoon: the left column is PM Commute over Briefing. Commute fills available
+   space (flex: 1 1 0); Briefing sizes to its content with a 40% minimum so it
+   always gets at least that much room but expands to show the full text. The
+   card-body override below lets the card measure its own height correctly. */
+.mode-afternoon .dash-col-left > #card-activity { flex: 1 1 0; min-height: 0; }
+.mode-afternoon .dash-col-left > #card-summary  { flex: 0 0 auto; min-height: 40%; }
+.mode-afternoon #card-summary .card-body        { flex: 0 0 auto; overflow: visible; }
 
 /* ── Cards ──────────────────────────────────────────────────────────── */
 .card {
@@ -458,6 +461,10 @@ html, body {
 /* Smooth the opacity swap between radar frames. Base-map opacity never
    changes so this transition only fires on radar layer switches. */
 .leaflet-tile-pane > div { transition: opacity 0.1s linear; }
+/* Smooth the opacity swap between radar frames so any remaining timing
+   variance doesn't produce a hard flash. Base-map opacity never changes
+   so this transition only fires on radar layer switches. */
+.leaflet-tile-pane > div { transition: opacity 0.3s ease-in-out; }
 
 /* ── Map controls / Leaflet dark tweaks ─────────────────────────────── */
 .map-toggle {
