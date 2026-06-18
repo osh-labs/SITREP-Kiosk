@@ -266,7 +266,7 @@ NWS / SPC / 511GA / AirNow --> [Python pollers] --> validate / normalize / rank
 | SPC | Convective outlook / mesoscale products | None (public) | To confirm at build |
 | 511GA | 511ga.org REST API (events, alerts, cameras, message signs) | Developer key | JSON |
 | AirNow | airnowapi.org current observations by lat/long | API key | JSON |
-| Anthropic | Messages API, model claude-sonnet-4-6 | API key (secret) | JSON |
+| Anthropic | Messages API, model claude-haiku-4-5 | API key (secret) | JSON |
 
 ### 7.5 Verified source facts
 - NWS api.weather.gov requires no API key — only a User-Agent header — and returns GeoJSON. Atlanta metro is served by WFO Peachtree City (FFC).

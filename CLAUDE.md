@@ -42,7 +42,7 @@ Not mandatory, but stay close to it and keep dependencies minimal:
   frontend) with uvicorn. Flask is an acceptable substitute.
 - HTTP client: httpx (or requests).
 - Scheduling: APScheduler, or a simple asyncio loop.
-- LLM: the official `anthropic` Python SDK. Model string `claude-sonnet-4-6`.
+- LLM: the official `anthropic` Python SDK. Model string `claude-haiku-4-5`.
 - Frontend: plain HTML/CSS/JS, no build step, no framework required. Carousel in
   vanilla JS. Prioritize legibility at across-the-room distance (PRD NFR-7).
 - Config: a single YAML file (see `config/config.example.yaml`).

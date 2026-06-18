@@ -204,7 +204,7 @@ SITREP_PORT=8080
 |-----|--------|
 | `GA511_API_KEY` | Register free at https://511ga.org (developer portal) |
 | `AIRNOW_API_KEY` | Register free at https://docs.airnowapi.org |
-| `ANTHROPIC_API_KEY` | https://console.anthropic.com — use a key scoped to claude-sonnet-4-6 |
+| `ANTHROPIC_API_KEY` | https://console.anthropic.com — used for briefing generation (claude-haiku-4-5) |
 
 After editing `.env`, restart the backend:
 
