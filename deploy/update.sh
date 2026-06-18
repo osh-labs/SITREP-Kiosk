@@ -8,13 +8,17 @@
 # systemd restart — is done with sudo.
 #
 # USAGE:
-#   bash deploy/update.sh [--branch NAME] [--no-restart] [--no-deps]
+#   bash deploy/update.sh [--branch NAME] [--force] [--no-restart] [--no-deps]
 #
 #   # From anywhere, run as the owner (e.g. user "kiosk"):
 #   sudo -u kiosk bash /opt/sitrep/deploy/update.sh
 #
 # OPTIONS:
 #   --branch NAME   Branch to pull. Default: the repo's current branch.
+#   --force         Hard-reset the working tree to origin/<branch>, discarding
+#                   local edits to tracked files (e.g. a hand-edited install.sh).
+#                   Untracked, gitignored files (config.yaml, .env) are kept.
+#                   Use this to force a box back into alignment with the remote.
 #   --no-restart    Pull (and update deps) but don't restart the backend.
 #   --no-deps       Don't pip-install even if requirements.txt changed.
 #
@@ -42,10 +46,12 @@ SERVICE="sitrep-backend.service"
 BRANCH=""
 RESTART=1
 DEPS=1
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --branch)     BRANCH="$2"; shift 2 ;;
+        --force)      FORCE=1; shift ;;
         --no-restart) RESTART=0; shift ;;
         --no-deps)    DEPS=0; shift ;;
         -h|--help)    grep '^#' "$0" | head -40; exit 0 ;;
@@ -80,21 +86,32 @@ info "Repo root : ${REPO_ROOT}"
 info "Owner     : ${OWNER}"
 info "Branch    : ${BRANCH}"
 
-# Refuse to clobber local edits (config.yaml / .env are gitignored and safe).
+# Refuse to clobber local edits unless --force was given. config.yaml / .env are
+# gitignored (untracked), so they are safe either way.
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
-    warn "Tracked files have uncommitted changes:"
-    git status --short --untracked-files=no >&2
-    fail "Commit, stash, or revert them before updating."
+    if [[ "${FORCE}" -eq 1 ]]; then
+        warn "Tracked files have local changes — --force will discard them:"
+        git status --short --untracked-files=no >&2
+    else
+        warn "Tracked files have uncommitted changes:"
+        git status --short --untracked-files=no >&2
+        fail "Commit/stash/revert them, or re-run with --force to discard and align to origin."
+    fi
 fi
 
-# ── 2. Fast-forward pull ──────────────────────────────────────────────────────
-step "Pulling latest from origin/${BRANCH}"
+# ── 2. Pull (fast-forward) or hard-reset to origin (--force) ──────────────────
 OLD_REV="$(git rev-parse HEAD)"
 req_hash() { [[ -f "${REQ_FILE}" ]] && sha1sum "${REQ_FILE}" | awk '{print $1}' || echo "none"; }
 REQ_BEFORE="$(req_hash)"
 
 git fetch --prune origin "${BRANCH}"
-git pull --ff-only origin "${BRANCH}"
+if [[ "${FORCE}" -eq 1 ]]; then
+    step "Hard-resetting to origin/${BRANCH} (discarding local tracked changes)"
+    git reset --hard "origin/${BRANCH}"
+else
+    step "Fast-forward pulling origin/${BRANCH}"
+    git pull --ff-only origin "${BRANCH}"
+fi
 
 NEW_REV="$(git rev-parse HEAD)"
 if [[ "${OLD_REV}" == "${NEW_REV}" ]]; then

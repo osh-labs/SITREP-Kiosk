@@ -407,9 +407,18 @@ avoids root-owned files:
 sudo -u kiosk bash /opt/sitrep/deploy/update.sh
 ```
 
-Flags: `--branch NAME` (pull a specific branch), `--no-restart`, `--no-deps`.
-The script refuses to run if it isn't the repo owner or if tracked files have
-uncommitted changes (your `config.yaml`/`.env` are gitignored and untouched).
+Flags: `--branch NAME` (pull a specific branch), `--no-restart`, `--no-deps`,
+and `--force`. The script refuses to run if it isn't the repo owner or if
+tracked files have uncommitted changes (your `config.yaml`/`.env` are gitignored
+and untouched).
+
+To force a box back into alignment with the remote — discarding local edits to
+tracked files such as a hand-modified `install.sh` — use `--force`, which
+hard-resets to `origin/<branch>` (untracked, gitignored files are kept):
+
+```bash
+sudo -u kiosk bash /opt/sitrep/deploy/update.sh --force
+```
 
 > The Chromium kiosk caches the static frontend, so after a frontend change
 > reboot the mini PC or restart the kiosk session — restarting the backend
