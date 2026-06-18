@@ -44,7 +44,10 @@ polling_seconds:
   airnow: 1800    # hourly NowCast; stay well under 500 req/hr/service
   ga511: 90       # within 10 calls / 60 s
   openmeteo: 900  # keyless; generous free tier — 15 min matches NWS cadence
-  briefing: 1800  # regenerate BLUF on schedule; also regenerate on material change
+  briefing: 1800  # BLUF regenerates on material data change, not on a timer.
+                  # This value is only the retry cadence for recovering a
+                  # template fallback to a model briefing when the model was
+                  # unavailable; steady state makes no calls until data shifts.
 
 staleness_seconds:
   default: 3600   # beyond this, mark a source stale and show the degraded state

@@ -2,11 +2,20 @@
 APScheduler-based polling scheduler.
 
 Polls each source on its own interval from config.polling_seconds.
-Regenerates briefing on schedule AND on material change.
 Updates cache + rebuilds state after each poll cycle.
 
-Also detects material changes (alert issued/cleared, threshold crossed)
-to trigger an early briefing regeneration.
+Briefing regeneration is data-driven, NOT time-driven. The briefing is
+only regenerated when the underlying state changes materially — a new or
+cleared NWS alert, a change in the ranked hazard set or its severity, an
+AQI category shift, a new/upgraded SPC convective outlook, or a morning/
+afternoon mode switch. This is captured by a content signature
+(`_briefing_signature`); an unchanged signature means no LLM call.
+
+The one exception is recovery: if the last briefing fell back to the
+template (model unavailable, network error, missing key), it is retried on
+the `briefing` interval so the board self-heals to a real briefing once the
+model is reachable again. A steady-state board with a successful model
+briefing makes no further calls until the data actually changes.
 """
 from __future__ import annotations
 
@@ -36,31 +45,60 @@ log = logging.getLogger(__name__)
 # Material-change detection
 # ---------------------------------------------------------------------------
 
-# Track alert fingerprints for change detection
-_last_alert_set: set[str] = set()
-_last_ranked_keys: list[str] = []
+# Signature of the inputs that drove the last briefing. The briefing is
+# regenerated only when this changes.
+_last_briefing_signature: Optional[str] = None
 
 
 def _alert_fingerprint(alert: dict) -> str:
     return f"{alert.get('event', '')}|{alert.get('severity', '')}"
 
 
-def _is_material_change(new_nws: Optional[dict], new_hazards_block: Any) -> bool:
-    """Return True if alerts or top-ranked hazards changed since last check."""
-    global _last_alert_set, _last_ranked_keys
+def _briefing_signature(
+    nws_data: Optional[dict],
+    spc_data: Optional[dict],
+    hazards: Any,
+    mode: str,
+) -> str:
+    """Stable fingerprint of every input that should change the briefing.
 
-    new_alerts = set()
-    if new_nws:
-        for a in new_nws.get("alerts", []):
-            new_alerts.add(_alert_fingerprint(a))
+    Covers: morning/afternoon mode, the active NWS alert set (event +
+    severity), the ranked hazard set (key + severity, in rank order), the
+    AQI callout category, and the SPC Day 1-3 convective outlook categories.
+    A new or cleared advisory, an upgraded outlook, a severity shift, or a
+    mode switch all change this string; nothing else does. When the signature
+    is unchanged the briefing is reused and no LLM call is made.
+    """
+    parts: list[str] = [f"mode={mode}"]
 
-    new_ranked = [h.key for h in (new_hazards_block.ranked if new_hazards_block else [])]
+    # NWS alerts (event + severity), order-independent
+    alerts: list[str] = []
+    if nws_data:
+        alerts = sorted(_alert_fingerprint(a) for a in nws_data.get("alerts", []))
+    parts.append("alerts=" + ",".join(alerts))
 
-    changed = (new_alerts != _last_alert_set) or (new_ranked != _last_ranked_keys)
-    if changed:
-        _last_alert_set = new_alerts
-        _last_ranked_keys = new_ranked
-    return changed
+    # Ranked hazards (key + severity), in rank order
+    ranked: list[str] = []
+    if hazards and hazards.ranked:
+        ranked = [f"{h.key}:{h.severity}" for h in hazards.ranked]
+    parts.append("hazards=" + ",".join(ranked))
+
+    # AQI callout category (a separate callout, not in the ranked chain)
+    aqi_cat = ""
+    if hazards and hazards.aqi_callout:
+        aqi_cat = hazards.aqi_callout.category
+    parts.append("aqi=" + aqi_cat)
+
+    # SPC convective outlook categories — a new or upgraded outlook is material
+    spc_parts: list[str] = []
+    if spc_data and spc_data.get("_ok"):
+        for day in ("day1", "day2", "day3"):
+            d = spc_data.get(day)
+            if d:
+                spc_parts.append(f"{day}:{d.get('category', 'none')}")
+    parts.append("spc=" + ",".join(spc_parts))
+
+    return "|".join(parts)
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +219,7 @@ _last_briefing: Optional[dict] = None
 
 def _rebuild_state(force_briefing: bool = False) -> None:
     """Rebuild the consolidated state from current cache and update it."""
-    global _last_briefing_at, _last_briefing
+    global _last_briefing_at, _last_briefing, _last_briefing_signature
 
     cfg = get_config()
     cache = get_cache()
@@ -195,15 +233,29 @@ def _rebuild_state(force_briefing: bool = False) -> None:
     # Compute hazards
     hazards = hazards_module.compute_hazards(nws_data, spc_data, airnow_data, cfg)
 
-    # Decide if we need to regenerate briefing
+    # Decide if we need to regenerate the briefing. Regeneration is driven by a
+    # change in the underlying state (see _briefing_signature) — NOT by a timer.
+    # The lone time-based path is recovery: a prior template fallback is retried
+    # on the `briefing` interval so the board self-heals once the model is
+    # reachable. A successful model briefing makes no further calls until the
+    # data actually changes.
     now = datetime.now(tz=timezone.utc)
-    briefing_interval = cfg.polling_seconds.get("briefing", 1800)
+    mode = state_builder._compute_display_mode(cfg)
+    signature = _briefing_signature(nws_data, spc_data, hazards, mode)
+
+    retry_interval = cfg.polling_seconds.get("briefing", 1800)
+    last_was_template = bool(_last_briefing) and _last_briefing.get("source") == "template"
+    template_retry_due = (
+        last_was_template
+        and _last_briefing_at is not None
+        and (now - _last_briefing_at).total_seconds() >= retry_interval
+    )
+
+    is_initial = force_briefing or _last_briefing is None
     need_briefing = (
-        force_briefing
-        or _last_briefing is None
-        or _last_briefing_at is None
-        or (now - _last_briefing_at).total_seconds() >= briefing_interval
-        or _is_material_change(nws_data, hazards)
+        is_initial
+        or signature != _last_briefing_signature
+        or template_retry_due
     )
 
     if need_briefing:
@@ -215,8 +267,6 @@ def _rebuild_state(force_briefing: bool = False) -> None:
             day1 = spc_data.get("day1")
             if day1:
                 spc_outlook = day1
-
-        mode = state_builder._compute_display_mode(cfg)
 
         # Build sources_used list
         sources_used = []
@@ -238,7 +288,9 @@ def _rebuild_state(force_briefing: bool = False) -> None:
             sources_used=sources_used,
         )
         _last_briefing_at = now
-        log.info("Briefing regenerated (source=%s)", _last_briefing.get("source"))
+        _last_briefing_signature = signature
+        reason = "initial" if is_initial else "template-retry" if template_retry_due else "state-change"
+        log.info("Briefing regenerated (source=%s, reason=%s)", _last_briefing.get("source"), reason)
 
     # Build full state
     state = state_builder.build_state(
