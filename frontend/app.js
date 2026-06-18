@@ -13,6 +13,7 @@
 const DEFAULT_REFRESH_S = 30;
 const API_ENDPOINT      = '/api/state';
 const ALERTS_ENDPOINT   = '/api/alerts.geojson';
+const TEMPS_ENDPOINT    = '/api/temps.geojson';
 
 /* Severity metadata — icon shape + label so color is never the only cue */
 const SEV_META = {
@@ -152,11 +153,16 @@ let reconnecting  = false;
 let map          = null;
 let baseLayer    = null;
 let alertLayer   = null;
+let tempLayer    = null;   // L.layerGroup of temperature markers
 let radarFrames  = [];     // array of Leaflet tileLayers, oldest → newest
 let radarTimer   = null;
 let radarIdx     = 0;
 let radarBuiltAt = 0;      // epoch ms when frames last rebuilt
 let mapInited    = false;
+let mapCfg       = {};     // last weather_map config (for rotation handlers)
+let mapMode      = null;   // active rotation view: 'radar' | 'alerts' | 'temps'
+let mapModes     = [];     // ordered rotation views from config
+let rotationTimer = null;
 
 /* ── DOM refs ────────────────────────────────────────────────────────────── */
 const $loading   = document.getElementById('loading-screen');
@@ -688,7 +694,12 @@ function buildRadarFrames(cfg) {
   const nFrames    = anim.enabled ? (anim.frames || 8) : 1;
   const intervalMs = anim.interval_ms || 600;
 
-  const applyOpacity = () => radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? opacity : 0));
+  // Honor the active rotation view: radar frames stay hidden unless 'radar' is
+  // showing, so the animation timer can't flash radar over temps/alerts.
+  const applyOpacity = () => {
+    const show = mapMode === null || mapMode === 'radar';
+    radarFrames.forEach((l, i) => l.setOpacity(show && i === radarIdx ? opacity : 0));
+  };
 
   // Don't start the animation until every frame has finished loading its tiles.
   // Until then the most-recent frame (offset=0) is shown statically so the map
@@ -737,8 +748,57 @@ async function fetchAlerts() {
   }
 }
 
+/* Temperature color scale (°F) — cool blue → hot red, legible across the room. */
+const TEMP_SCALE = [
+  { t: 20,  c: '#5b8fff' },
+  { t: 32,  c: '#56c6e8' },
+  { t: 45,  c: '#4bd0a0' },
+  { t: 60,  c: '#7ec64a' },
+  { t: 72,  c: '#e3c93b' },
+  { t: 85,  c: '#ef9a3d' },
+  { t: 95,  c: '#ec6a3a' },
+  { t: 105, c: '#d8392f' },
+];
+
+function tempColor(f) {
+  if (f == null || isNaN(f)) return '#888';
+  if (f <= TEMP_SCALE[0].t) return TEMP_SCALE[0].c;
+  const last = TEMP_SCALE[TEMP_SCALE.length - 1];
+  if (f >= last.t) return last.c;
+  for (let i = 0; i < TEMP_SCALE.length - 1; i++) {
+    const a = TEMP_SCALE[i], b = TEMP_SCALE[i + 1];
+    if (f >= a.t && f < b.t) return a.c; // stepped scale reads cleaner at distance
+  }
+  return last.c;
+}
+
+async function fetchTemps() {
+  if (!tempLayer) return;
+  try {
+    const resp = await fetch(TEMPS_ENDPOINT, { cache: 'no-store' });
+    if (!resp.ok) return;
+    const gj = await resp.json();
+    tempLayer.clearLayers();
+    (gj.features || []).forEach(ft => {
+      const coords = (ft.geometry || {}).coordinates;
+      const t = (ft.properties || {}).temp_f;
+      if (!coords || t == null) return;
+      const [lon, lat] = coords;
+      const icon = L.divIcon({
+        className: 'temp-dot',
+        html: `<span style="background:${tempColor(t)}">${Math.round(t)}&deg;</span>`,
+        iconSize: null,
+      });
+      L.marker([lat, lon], { icon, interactive: false, keyboard: false }).addTo(tempLayer);
+    });
+  } catch (e) {
+    /* temps are best-effort; the radar + base map still render */
+  }
+}
+
 function initMap(state) {
   const cfg = state.weather_map || {};
+  mapCfg = cfg;
   if (cfg.enabled === false) {
     document.getElementById('card-map').classList.add('hidden');
     return;
@@ -755,41 +815,112 @@ function initMap(state) {
   const base = BASE_TILES[cfg.base_style] || BASE_TILES.dark;
   baseLayer = L.tileLayer(base.url, base.options).addTo(map);
 
+  // Radar frames stay on the map (opacity toggled by the active view); the
+  // alert and temperature layers are added/removed by the rotation.
   buildRadarFrames(cfg);
-
-  alertLayer = L.geoJSON(null, { style: alertStyle, onEachFeature: alertOnEach }).addTo(map);
+  alertLayer = L.geoJSON(null, { style: alertStyle, onEachFeature: alertOnEach });
+  tempLayer  = L.layerGroup();
   fetchAlerts();
+  fetchTemps();
 
-  // Lightweight custom layer toggle (radar + alerts) built from config — we
-  // manage the animated radar frame set manually, so we don't use L.control.layers.
-  addLayerToggle(cfg);
+  addMapControls(cfg);
+  startMapRotation(cfg);
 
   mapInited = true;
 }
 
-function addLayerToggle(cfg) {
-  const ctl = L.control({ position: 'topright' });
-  ctl.onAdd = function () {
-    const div = L.DomUtil.create('div', 'map-toggle');
-    div.innerHTML = `
-      <label><input type="checkbox" id="tg-radar" ${((cfg.layers||{}).radar||{}).default_on === false ? '' : 'checked'}> Radar</label>
-      <label><input type="checkbox" id="tg-alerts" ${((cfg.layers||{}).alerts||{}).default_on === false ? '' : 'checked'}> Alerts</label>`;
+const MODE_META = {
+  radar:  { label: 'Weather Radar' },
+  alerts: { label: 'Watches &amp; Warnings' },
+  temps:  { label: 'Temperature' },
+};
+
+/* Show exactly one rotation view; radar opacity is toggled rather than the
+   layer removed so the warmed-up frame cache and animation timer survive. */
+function showMapMode(mode) {
+  if (!map) return;
+  mapMode = mode;
+  const radarOp = ((mapCfg.layers || {}).radar || {}).opacity != null
+    ? mapCfg.layers.radar.opacity : 0.7;
+  radarFrames.forEach((l, i) => l.setOpacity(mode === 'radar' && i === radarIdx ? radarOp : 0));
+
+  if (mode === 'alerts') { if (alertLayer && !map.hasLayer(alertLayer)) map.addLayer(alertLayer); }
+  else if (alertLayer && map.hasLayer(alertLayer)) map.removeLayer(alertLayer);
+
+  if (mode === 'temps') {
+    if (tempLayer) {
+      tempLayer.setZIndex && tempLayer.setZIndex(400);
+      if (!map.hasLayer(tempLayer)) map.addLayer(tempLayer);
+    }
+  } else if (tempLayer && map.hasLayer(tempLayer)) map.removeLayer(tempLayer);
+
+  updateMapChrome(mode);
+}
+
+function startMapRotation(cfg) {
+  const rot = cfg.rotation || {};
+  const modes = (rot.modes && rot.modes.length) ? rot.modes.slice() : ['radar', 'alerts', 'temps'];
+  mapModes = modes;
+  if (rotationTimer) { clearInterval(rotationTimer); rotationTimer = null; }
+
+  let idx = 0;
+  showMapMode(modes[idx]);
+  if (rot.enabled === false || modes.length < 2) return;
+
+  const intervalMs = (rot.interval_seconds || 20) * 1000;
+  rotationTimer = setInterval(() => {
+    idx = (idx + 1) % modes.length;
+    showMapMode(modes[idx]);
+  }, intervalMs);
+}
+
+/* Top-right view indicator + bottom-left legend, both updated per active view. */
+function addMapControls(cfg) {
+  const ind = L.control({ position: 'topright' });
+  ind.onAdd = () => {
+    const div = L.DomUtil.create('div', 'map-mode');
+    div.id = 'map-mode';
     L.DomEvent.disableClickPropagation(div);
     return div;
   };
-  ctl.addTo(map);
-  setTimeout(() => {
-    const r = document.getElementById('tg-radar');
-    const a = document.getElementById('tg-alerts');
-    if (r) r.addEventListener('change', () => {
-      const op = ((cfg.layers || {}).radar || {}).opacity || 0.7;
-      if (r.checked) { radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? op : 0)); }
-      else { radarFrames.forEach(l => l.setOpacity(0)); }
-    });
-    if (a) a.addEventListener('change', () => {
-      if (a.checked) map.addLayer(alertLayer); else map.removeLayer(alertLayer);
-    });
-  }, 0);
+  ind.addTo(map);
+
+  const leg = L.control({ position: 'bottomleft' });
+  leg.onAdd = () => {
+    const div = L.DomUtil.create('div', 'map-legend hidden');
+    div.id = 'map-legend';
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  };
+  leg.addTo(map);
+}
+
+function updateMapChrome(mode) {
+  const ind = document.getElementById('map-mode');
+  if (ind) {
+    ind.innerHTML = (mapModes.length ? mapModes : [mode]).map(m => {
+      const meta = MODE_META[m] || { label: m };
+      return `<span class="${m === mode ? 'active' : ''}">${meta.label}</span>`;
+    }).join('');
+  }
+  const leg = document.getElementById('map-legend');
+  if (!leg) return;
+  if (mode === 'temps') {
+    const stops = TEMP_SCALE.filter((_, i) => i % 2 === 0 || i === TEMP_SCALE.length - 1);
+    leg.innerHTML = '<span class="legend-title">Temp &deg;F</span>' +
+      stops.map(s => `<span class="legend-swatch"><i style="background:${s.c}"></i>${s.t}</span>`).join('');
+    leg.classList.remove('hidden');
+  } else if (mode === 'alerts') {
+    const items = [
+      ['watch', 'Watch'], ['advisory', 'Advisory'], ['danger', 'Warning'], ['extreme', 'Severe'],
+    ];
+    leg.innerHTML = items.map(([k, lbl]) =>
+      `<span class="legend-swatch"><i style="background:${SEV_COLORS[k]}"></i>${lbl}</span>`).join('');
+    leg.classList.remove('hidden');
+  } else {
+    leg.classList.add('hidden');
+    leg.innerHTML = '';
+  }
 }
 
 function renderMap(state) {
@@ -797,10 +928,15 @@ function renderMap(state) {
   if (cfg.enabled === false) return;
   if (!mapInited) { initMap(state); }
   else {
+    mapCfg = cfg;
     const anim = cfg.animation || {};
     const refreshMs = (anim.refresh_seconds || 300) * 1000;
-    if (Date.now() - radarBuiltAt >= refreshMs) buildRadarFrames(cfg);
+    if (Date.now() - radarBuiltAt >= refreshMs) {
+      buildRadarFrames(cfg);
+      showMapMode(mapMode);  // re-assert the active view after a frame rebuild
+    }
     fetchAlerts();
+    fetchTemps();
   }
 
   // Degraded overlay driven by the map source freshness.

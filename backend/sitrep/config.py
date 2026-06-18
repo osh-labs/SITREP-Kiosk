@@ -81,12 +81,25 @@ _DEFAULTS: dict[str, Any] = {
         "layers": {
             "radar": {"default_on": True, "opacity": 0.7},
             "alerts": {"default_on": True},
+            "temps": {"default_on": True, "opacity": 0.85},
         },
         "animation": {
             "enabled": True,
             "frames": 8,
             "interval_ms": 600,
             "refresh_seconds": 300,
+        },
+        # The map auto-rotates between these views; each shows for interval_seconds.
+        "rotation": {
+            "enabled": True,
+            "interval_seconds": 20,
+            "modes": ["radar", "alerts", "temps"],
+        },
+        # Grid sampled for the temperature view (one keyless Open-Meteo bulk request).
+        "temps": {
+            "grid_rows": 7,
+            "grid_cols": 7,
+            "span_deg": 3.0,
         },
     },
     "polling_seconds": {
@@ -95,6 +108,7 @@ _DEFAULTS: dict[str, Any] = {
         "airnow": 1800,
         "ga511": 90,
         "openmeteo": 900,
+        "temps": 900,
         "briefing": 1800,
     },
     "staleness_seconds": {

@@ -476,6 +476,45 @@ html, body {
 }
 .map-toggle label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
 .map-toggle input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+
+/* Map rotation view indicator (top-right): all views, active highlighted. */
+.map-mode {
+  display: flex; gap: 0.3rem;
+  background: rgba(22, 27, 34, 0.92);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.3rem; font-size: var(--fs-sm); font-weight: 700;
+}
+.map-mode span {
+  padding: 0.25rem 0.55rem; border-radius: calc(var(--radius) - 2px);
+  color: var(--text-muted); white-space: nowrap;
+}
+.map-mode span.active { background: var(--accent); color: #0a0e14; }
+
+/* Map legend (bottom-left): swatches for the active view. */
+.map-legend {
+  display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+  background: rgba(22, 27, 34, 0.92);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.35rem 0.6rem; color: var(--text-primary);
+  font-size: var(--fs-sm); font-weight: 700;
+}
+.map-legend.hidden { display: none; }
+.map-legend .legend-title { color: var(--text-muted); }
+.map-legend .legend-swatch { display: flex; align-items: center; gap: 0.3rem; }
+.map-legend .legend-swatch i {
+  width: 0.95rem; height: 0.95rem; border-radius: 3px; display: inline-block;
+}
+
+/* Temperature view markers — colored pills, legible across the room. */
+.temp-dot { background: none; border: none; }
+.temp-dot span {
+  display: inline-block; transform: translate(-50%, -50%);
+  padding: 0.1rem 0.4rem; border-radius: 999px;
+  font-size: var(--fs-base); font-weight: 800; line-height: 1.1;
+  color: #0a0e14; border: 1px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); white-space: nowrap;
+}
+
 .leaflet-container { background: #0a0e14; }
 .leaflet-control-attribution {
   background: rgba(13, 17, 23, 0.8) !important;

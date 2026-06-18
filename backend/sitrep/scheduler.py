@@ -38,6 +38,7 @@ from .sources import spc as spc_source
 from .sources import ga511 as ga511_source
 from .sources import airnow as airnow_source
 from .sources import openmeteo as openmeteo_source
+from .sources import openmeteo_grid as openmeteo_grid_source
 
 log = logging.getLogger(__name__)
 
@@ -208,6 +209,23 @@ def _poll_openmeteo() -> None:
         log.error("Open-Meteo poll exception: %s", exc)
 
 
+def _poll_temps() -> None:
+    cfg = get_config()
+    cache = get_cache()
+    client = _get_http_client()
+    try:
+        data = openmeteo_grid_source.fetch(client, cfg)
+        if data.get("_ok"):
+            cache.update("temps", data)
+            log.info("Temp-grid poll OK (%d points)", len(data.get("features", [])))
+        else:
+            cache.mark_failed("temps")
+            log.warning("Temp-grid poll returned not-ok")
+    except Exception as exc:
+        cache.mark_failed("temps")
+        log.error("Temp-grid poll exception: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # State + briefing rebuild
 # ---------------------------------------------------------------------------
@@ -315,6 +333,7 @@ def _full_poll_cycle() -> None:
     _poll_ga511()
     _poll_airnow()
     _poll_openmeteo()
+    _poll_temps()
     _rebuild_state(force_briefing=True)
 
 
@@ -382,6 +401,15 @@ def start_scheduler() -> BackgroundScheduler:
         trigger=IntervalTrigger(seconds=ps.get("openmeteo", 900)),
         id="poll_openmeteo",
         name="Open-Meteo poller",
+        replace_existing=True,
+        coalesce=True,
+        misfire_grace_time=120,
+    )
+    _scheduler.add_job(
+        _poll_temps,
+        trigger=IntervalTrigger(seconds=ps.get("temps", 900)),
+        id="poll_temps",
+        name="Temp-grid poller",
         replace_existing=True,
         coalesce=True,
         misfire_grace_time=120,

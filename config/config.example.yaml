@@ -32,11 +32,20 @@ weather_map:
   layers:
     radar:  { default_on: true, opacity: 0.7 }
     alerts: { default_on: true }
+    temps:  { default_on: true, opacity: 0.85 }
   animation:
     enabled: true
     frames: 8                     # number of 5-min IEM radar steps in the loop
     interval_ms: 600              # dwell per frame
     refresh_seconds: 300          # rebuild the frame set (match IEM's ~5-min cadence)
+  rotation:                       # auto-cycle the map between views
+    enabled: true
+    interval_seconds: 20          # how long each view shows
+    modes: [radar, alerts, temps] # order of the rotation
+  temps:                          # grid sampled for the temperature view
+    grid_rows: 7                  # one keyless Open-Meteo bulk request
+    grid_cols: 7
+    span_deg: 3.0                 # degrees the grid spans, centered on the map
 
 polling_seconds:
   nws: 900        # 10-15 min
@@ -44,6 +53,7 @@ polling_seconds:
   airnow: 1800    # hourly NowCast; stay well under 500 req/hr/service
   ga511: 90       # within 10 calls / 60 s
   openmeteo: 900  # keyless; generous free tier — 15 min matches NWS cadence
+  temps: 900      # keyless Open-Meteo grid for the map temperature view
   briefing: 1800  # BLUF regenerates on material data change, not on a timer.
                   # This value is only the retry cadence for recovering a
                   # template fallback to a model briefing when the model was

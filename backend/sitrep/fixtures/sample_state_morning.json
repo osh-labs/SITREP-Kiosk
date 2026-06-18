@@ -366,6 +366,10 @@
       },
       "alerts": {
         "default_on": true
+      },
+      "temps": {
+        "default_on": true,
+        "opacity": 0.85
       }
     },
     "animation": {
@@ -381,6 +385,20 @@
       "fetched_at": "2026-06-13T06:35:00-04:00",
       "age_seconds": 300,
       "last_good_at": "2026-06-13T06:35:00-04:00"
+    },
+    "rotation": {
+      "enabled": true,
+      "interval_seconds": 20,
+      "modes": [
+        "radar",
+        "alerts",
+        "temps"
+      ]
+    },
+    "temps": {
+      "grid_rows": 7,
+      "grid_cols": 7,
+      "span_deg": 3.0
     }
   }
 }

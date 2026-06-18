@@ -187,6 +187,34 @@ def create_app() -> FastAPI:
             return JSONResponse(content=nws_data["alerts_geojson"])
         return JSONResponse(content=empty)
 
+    @app.get("/api/temps.geojson", tags=["data"])
+    async def get_temps_geojson() -> JSONResponse:
+        """Gridded temperature readings as a GeoJSON point layer, for the map's
+        temperature view.
+
+        Non-authoritative situational shading (same class as the radar imagery),
+        sampled from keyless Open-Meteo and served from loopback. Demo mode serves
+        a static sample.
+        """
+        empty = {"type": "FeatureCollection", "features": []}
+
+        if _demo_mode_active():
+            sample = _FIXTURES_DIR / "sample_temps.geojson"
+            try:
+                with open(sample) as fh:
+                    return JSONResponse(content=json.load(fh))
+            except Exception:
+                return JSONResponse(content=empty)
+
+        cache = get_cache()
+        temps_data = cache.get_data("temps")
+        if temps_data and temps_data.get("features"):
+            return JSONResponse(content={
+                "type": "FeatureCollection",
+                "features": temps_data["features"],
+            })
+        return JSONResponse(content=empty)
+
     # ── Static frontend ───────────────────────────────────────────────────────
     if _FRONTEND_DIR.exists():
         # Mount specific asset paths before the catch-all
