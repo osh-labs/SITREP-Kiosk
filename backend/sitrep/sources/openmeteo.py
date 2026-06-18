@@ -28,8 +28,9 @@ Returns a normalized dict consumed by state_builder.py:
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +65,19 @@ def _timezone(config: Any) -> str:
     """IANA timezone for the Open-Meteo request (keeps arrays local-aligned)."""
     tz = config.get("weather", "timezone", default=None)
     return tz or "America/New_York"
+
+
+def _naive_local_to_utc_iso(naive_str: str, tz_name: str) -> Optional[str]:
+    """Convert a naive ISO datetime string (local to tz_name) to a UTC ISO string
+    with a Z suffix so JavaScript's Date() always parses it correctly regardless
+    of the OS timezone on the kiosk host."""
+    if not naive_str:
+        return None
+    try:
+        local_dt = datetime.fromisoformat(naive_str).replace(tzinfo=ZoneInfo(tz_name))
+        return local_dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except Exception:
+        return naive_str
 
 
 def _heat_index_f(temp_f: Optional[float], rh: Optional[float]) -> Optional[float]:
@@ -169,10 +183,11 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         sunrises = daily.get("sunrise", []) or []
         sunsets = daily.get("sunset", []) or []
         uvs = daily.get("uv_index_max", []) or []
+        tz_name = _timezone(config)
         if sunrises:
-            result["today"]["sunrise"] = sunrises[0]
+            result["today"]["sunrise"] = _naive_local_to_utc_iso(sunrises[0], tz_name)
         if sunsets:
-            result["today"]["sunset"] = sunsets[0]
+            result["today"]["sunset"] = _naive_local_to_utc_iso(sunsets[0], tz_name)
         if uvs:
             result["today"]["uv_index"] = _round_or_none(uvs[0], 1)
     except Exception as exc:
