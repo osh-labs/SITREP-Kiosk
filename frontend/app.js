@@ -485,7 +485,7 @@ function renderActivity(state) {
     ? `<ul class="event-list">${traffic.map(ev => eventItem(ev)).join('')}</ul>`
     : `<div class="no-data-placeholder">No reported traffic events.</div>`;
   const aList = alerts.length
-    ? `<ul class="event-list">${alerts.map(a => eventItem(a, a.severity || 'info')).join('')}</ul>`
+    ? `<ul class="event-list">${alerts.map(a => eventItem(a, alertSeverityFromProps(a))).join('')}</ul>`
     : `<div class="no-data-placeholder">No active NWS alerts.</div>`;
   $activity.innerHTML = `${cardTitle('Disruptions & Alerts')}
     <div class="card-body">${deg}
