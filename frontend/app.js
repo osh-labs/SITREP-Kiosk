@@ -495,20 +495,45 @@ function renderTempChart(state) {
   const W = 320, H = 120, PAD = 18;
   const all = temps.concat(heat);
   const minV = Math.min(...all) - 2, maxV = Math.max(...all) + 2;
+  const span = (maxV - minV) || 1;
   const tPts = chartPoints(hours.map(h => h.temp_f != null ? h.temp_f : minV), W, H, PAD, minV, maxV);
   const hPts = chartPoints(hours.map(h => h.heat_index_f != null ? h.heat_index_f : (h.temp_f != null ? h.temp_f : minV)), W, H, PAD, minV, maxV);
-  const ticks = [0, Math.floor(hours.length / 2), hours.length - 1]
-    .map(i => `<span>${esc(hhmm(hours[i].time) || '')}</span>`).join('');
+
+  // Horizontal gridlines at every 10°F. SVG uses preserveAspectRatio="none" so
+  // text inside the SVG would distort; labels go in the axis div instead.
+  const GRID_STEP = 10;
+  const gridStart = Math.ceil(minV / GRID_STEP) * GRID_STEP;
+  const gridTemps = [];
+  let gridSvg = '';
+  for (let t = gridStart; t <= maxV; t += GRID_STEP) {
+    const y = (H - PAD) - ((t - minV) / span) * (H - 2 * PAD);
+    gridSvg += `<line x1="${PAD}" y1="${y.toFixed(1)}" x2="${W - PAD}" y2="${y.toFixed(1)}" class="chart-grid-line"/>`;
+    gridTemps.push(Math.round(t));
+  }
+  // Y-axis labels: list gridline temps high→low so they read top-to-bottom.
+  const axisLabels = gridTemps.slice().reverse().map(t => `<span>${t}°</span>`).join('');
+
+  // X-axis ticks: first label is always "Now", middle and end show the hour.
+  const tickIdxs = [0, Math.floor(hours.length / 2), hours.length - 1];
+  const ticks = tickIdxs.map((i, pos) => {
+    const label = pos === 0 ? 'Now' : esc(hhmm(hours[i].time) || '');
+    return `<span>${label}</span>`;
+  }).join('');
 
   $chartTemp.innerHTML = `
     ${cardTitle('Temperature & Heat Index')}
     <div class="card-body chart-body">
-      <svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-        <polyline points="${hPts}" class="spark-line spark-heat"/>
-        <polyline points="${tPts}" class="spark-line spark-temp"/>
-      </svg>
-      <div class="chart-axis"><span>${Math.round(maxV)}°</span><span>${Math.round(minV)}°</span></div>
-      <div class="chart-ticks">${ticks}</div>
+      <div class="chart-with-axis">
+        <div class="chart-y-axis">${axisLabels}</div>
+        <div class="chart-svg-col">
+          <svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+            ${gridSvg}
+            <polyline points="${hPts}" class="spark-line spark-heat"/>
+            <polyline points="${tPts}" class="spark-line spark-temp"/>
+          </svg>
+          <div class="chart-ticks">${ticks}</div>
+        </div>
+      </div>
       <div class="chart-legend"><span class="lg lg-temp">— Temp</span><span class="lg lg-heat">– – Heat Index</span></div>
     </div>
     ${cardFooter(src)}`;
@@ -633,36 +658,48 @@ function alertOnEach(feature, layer) {
 }
 
 function buildRadarFrames(cfg) {
-  // Remove old frames
   radarFrames.forEach(l => map.removeLayer(l));
   radarFrames = [];
   if (radarTimer) { clearInterval(radarTimer); radarTimer = null; }
 
-  const anim = cfg.animation || {};
-  const opacity = ((cfg.layers || {}).radar || {}).opacity != null ? cfg.layers.radar.opacity : 0.7;
-  const nFrames = anim.enabled ? (anim.frames || 8) : 1;
+  const anim       = cfg.animation || {};
+  const opacity    = ((cfg.layers || {}).radar || {}).opacity != null ? cfg.layers.radar.opacity : 0.7;
+  const nFrames    = anim.enabled ? (anim.frames || 8) : 1;
+  const intervalMs = anim.interval_ms || 600;
 
-  // offsets oldest → newest, e.g. 35,30,...,0 for 8 frames
+  const applyOpacity = () => radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? opacity : 0));
+
+  // Don't start the animation until every frame has finished loading its tiles.
+  // Until then the most-recent frame (offset=0) is shown statically so the map
+  // is never blank. Once all frames are in the browser tile cache, frame
+  // transitions are instant and complete — no partial-tile flicker.
+  let loadedCount = 0;
+  const onFrameLoad = () => {
+    loadedCount++;
+    if (loadedCount >= nFrames && anim.enabled && radarFrames.length > 1 && !radarTimer) {
+      radarTimer = setInterval(() => {
+        radarIdx = (radarIdx + 1) % radarFrames.length;
+        applyOpacity();
+      }, intervalMs);
+    }
+  };
+
+  // Build layers oldest → newest; offset 0 = most recent frame (last in array).
   for (let i = 0; i < nFrames; i++) {
     const offset = (nFrames - 1 - i) * 5;
     const layer = L.tileLayer(radarTileUrl(offset), {
       opacity: 0, maxZoom: 12, zIndex: 200 + i,
       attribution: 'Radar: NWS via Iowa Environmental Mesonet',
     });
+    layer.once('load', onFrameLoad);
     layer.addTo(map);
     radarFrames.push(layer);
   }
 
+  // Show the most-recent frame immediately while older frames warm up.
   radarIdx = radarFrames.length - 1;
-  const applyOpacity = () => radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? opacity : 0));
   applyOpacity();
 
-  if (anim.enabled && radarFrames.length > 1) {
-    radarTimer = setInterval(() => {
-      radarIdx = (radarIdx + 1) % radarFrames.length;
-      applyOpacity();
-    }, anim.interval_ms || 600);
-  }
   radarBuiltAt = Date.now();
 }
 
