@@ -202,11 +202,13 @@
     "traffic": [
       {
         "text": "I-20 EB \u2014 heavy, about +18 min",
-        "type": "congestion"
+        "type": "congestion",
+        "priority": 2
       },
       {
         "text": "GA-400 SB \u2014 incident @ Northridge",
-        "type": "incident"
+        "type": "incident",
+        "priority": 1
       }
     ],
     "source": {
@@ -222,11 +224,13 @@
     "traffic": [
       {
         "text": "I-20 EB \u2014 heavy, about +18 min",
-        "type": "congestion"
+        "type": "congestion",
+        "priority": 2
       },
       {
         "text": "GA-400 SB \u2014 incident @ Northridge",
-        "type": "incident"
+        "type": "incident",
+        "priority": 1
       }
     ],
     "alerts": [],

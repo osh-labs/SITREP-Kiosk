@@ -7,10 +7,13 @@ Format: JSON events list
 
 Returns normalized dict:
   {
-    "traffic": [{"text": ..., "type": ...}, ...],
+    "traffic": [{"text": ..., "type": ..., "priority": int}, ...],  # sorted, worst first
     "alerts":  [{"text": ..., "event": ..., "severity": ...}, ...],
     "_ok": bool,
   }
+
+Traffic events are ranked deterministically (see _priority) so the most
+serious disruptions lead and minor ones fall to the bottom of the list.
 
 Each fetch makes ONE call (events endpoint).  If no key is configured,
 return a clean failure so demo mode / other sources are unaffected.
@@ -19,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from typing import Any
 
 log = logging.getLogger(__name__)
@@ -26,9 +30,67 @@ log = logging.getLogger(__name__)
 # 511GA REST API base
 _BASE_URL = "https://511ga.org/api/v2"
 
+# Fallback road-classification patterns (overridable via config.traffic).
+_DEFAULT_INTERSTATE_PATTERNS = [r"\bI[- ]?\d+\b", r"\binterstate\b"]
+_DEFAULT_STATE_ROAD_PATTERNS = [
+    r"\bUS[- ]?\d+\b",
+    r"\bSR[- ]?\d+\b",
+    r"\bGA[- ]?\d+\b",
+    r"\bstate route\b",
+    r"\bhwy\b",
+    r"\bhighway\b",
+]
+
+# Road importance, highest first. Used both as the priority tier and as the
+# tie-breaker within the "everything else" tail.
+_ROAD_INTERSTATE = 2
+_ROAD_STATE = 1
+_ROAD_OTHER = 0
+
 
 def _get_api_key() -> str | None:
     return os.environ.get("GA511_API_KEY") or None
+
+
+def _compile(patterns: Any, fallback: list[str]) -> list[re.Pattern]:
+    """Compile a list of case-insensitive regexes, falling back if unusable."""
+    pats = patterns if isinstance(patterns, list) and patterns else fallback
+    compiled: list[re.Pattern] = []
+    for p in pats:
+        try:
+            compiled.append(re.compile(p, re.I))
+        except re.error:
+            log.warning("511GA: skipping invalid road pattern %r", p)
+    return compiled
+
+
+def _road_class(text: str, interstate: list[re.Pattern], state: list[re.Pattern]) -> int:
+    """Grade a road by importance from its name/text. Interstate beats state."""
+    if any(p.search(text) for p in interstate):
+        return _ROAD_INTERSTATE
+    if any(p.search(text) for p in state):
+        return _ROAD_STATE
+    return _ROAD_OTHER
+
+
+def _priority(road_class: int, etype: str) -> int:
+    """
+    Deterministic traffic priority (higher = more important), per the ranked
+    hierarchy: interstate closure > interstate accident > state-road closure >
+    state-road accident > everything else. Within the tail, more important
+    roads still float above local ones via the road-class tie-breaker.
+    """
+    is_closure = etype == "closure"
+    is_accident = etype == "crash"
+    if road_class == _ROAD_INTERSTATE and is_closure:
+        return 50
+    if road_class == _ROAD_INTERSTATE and is_accident:
+        return 40
+    if road_class == _ROAD_STATE and is_closure:
+        return 30
+    if road_class == _ROAD_STATE and is_accident:
+        return 20
+    return road_class  # 0–2: everything else, ordered by road importance
 
 
 def _classify_event(event_type: str, subtype: str) -> str:
@@ -112,6 +174,16 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
     else:
         events = []
 
+    # Road-classification patterns (config-overridable).
+    interstate_re = _compile(
+        config.get("traffic", "interstate_patterns", default=None),
+        _DEFAULT_INTERSTATE_PATTERNS,
+    )
+    state_re = _compile(
+        config.get("traffic", "state_road_patterns", default=None),
+        _DEFAULT_STATE_ROAD_PATTERNS,
+    )
+
     traffic_items = []
     alert_items = []
 
@@ -134,10 +206,15 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
             })
         else:
             etype = _classify_event(event_type, subtype)
+            road_class = _road_class(text, interstate_re, state_re)
             traffic_items.append({
                 "text": text,
                 "type": etype,
+                "priority": _priority(road_class, etype),
             })
+
+    # Worst disruptions lead; ties keep source order (stable sort).
+    traffic_items.sort(key=lambda t: t["priority"], reverse=True)
 
     # Also try the alerts endpoint if available
     try:

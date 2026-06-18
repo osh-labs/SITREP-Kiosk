@@ -65,6 +65,25 @@ hazard_thresholds:
   winter:                            # triggers firm; values verify against FFC
     temp_f_with_precip: 32
 
+# 511GA traffic prioritization. Events are ranked deterministically (in code,
+# not by the model) so the board leads with the worst disruptions and lets
+# minor problems slide out of view. Ranked hierarchy, most to least important:
+#   1. Interstate closure   2. Interstate major accident
+#   3. State-road closure   4. State-road major accident   5. everything else
+traffic:
+  max_events: 6                  # show at most this many; the rest drop off
+  # Case-insensitive regexes that grade a road by importance from its name/text.
+  interstate_patterns:
+    - '\bI[- ]?\d+\b'            # I-285, I 75
+    - '\binterstate\b'
+  state_road_patterns:
+    - '\bUS[- ]?\d+\b'          # US-78, US 19
+    - '\bSR[- ]?\d+\b'          # SR-400
+    - '\bGA[- ]?\d+\b'          # GA-400
+    - '\bstate route\b'
+    - '\bhwy\b'
+    - '\bhighway\b'
+
 # D5 ranking, highest first. AQI is handled as a separate callout, not ranked here.
 ranking_order:
   - severe_weather

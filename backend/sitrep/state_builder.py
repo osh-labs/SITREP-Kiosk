@@ -173,18 +173,31 @@ def _build_weather_map(config: Any, source_block: Any) -> MapBlock:
     return MapBlock(config=map_cfg, source=source_block)
 
 
+def _traffic_events(ga511_data: Optional[dict], max_events: Optional[int]) -> list[TrafficEvent]:
+    """Build ranked TrafficEvents from 511GA data, worst first, capped to max_events."""
+    items: list[TrafficEvent] = []
+    if ga511_data:
+        for ev in ga511_data.get("traffic", []):
+            items.append(TrafficEvent(
+                text=ev["text"],
+                type=ev["type"],
+                priority=int(ev.get("priority", 0)),
+            ))
+    # ga511 already sorts; re-sort defensively so cached/fixture data is ordered too.
+    items.sort(key=lambda t: t.priority, reverse=True)
+    if max_events is not None and max_events > 0:
+        items = items[:max_events]
+    return items
+
+
 def _build_disruptions(
     nws_data: Optional[dict],
     ga511_data: Optional[dict],
     combined_source: Any,
+    max_events: Optional[int] = None,
 ) -> DisruptionsBlock:
-    traffic_items: list[TrafficEvent] = []
     alert_items: list[AlertEvent] = []
-
-    # 511GA traffic events
-    if ga511_data:
-        for ev in ga511_data.get("traffic", []):
-            traffic_items.append(TrafficEvent(text=ev["text"], type=ev["type"]))
+    traffic_items = _traffic_events(ga511_data, max_events)
 
     # NWS alerts
     if nws_data:
@@ -206,12 +219,9 @@ def _build_commute(
     nws_data: Optional[dict],
     ga511_data: Optional[dict],
     combined_source: Any,
+    max_events: Optional[int] = None,
 ) -> CommuteBlock:
-    traffic_items: list[TrafficEvent] = []
-
-    if ga511_data:
-        for ev in ga511_data.get("traffic", []):
-            traffic_items.append(TrafficEvent(text=ev["text"], type=ev["type"]))
+    traffic_items = _traffic_events(ga511_data, max_events)
 
     current = None
     if nws_data:
@@ -388,14 +398,17 @@ def build_state(
     # ── Section blocks ────────────────────────────────────────────────────────
     weather = _build_weather(nws_data, openmeteo_data, nws_sb)
 
+    max_traffic = config.get("traffic", "max_events", default=6)
+
     disruptions = _build_disruptions(
         nws_data, ga511_data,
         combined_source="511GA, NWS", # will be filled as SourceBlock by override below
+        max_events=max_traffic,
     )
     # Override disruptions source with proper SourceBlock
     disruptions.source = _combined_source("511GA, NWS", [ga511_sb, nws_sb])
 
-    commute = _build_commute(nws_data, ga511_data, None)
+    commute = _build_commute(nws_data, ga511_data, None, max_events=max_traffic)
     commute.source = _combined_source("NWS, 511GA", [nws_sb, ga511_sb])
 
     forecast = _build_forecast_3day(nws_data, spc_data, None)

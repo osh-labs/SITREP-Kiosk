@@ -125,6 +125,24 @@ _DEFAULTS: dict[str, Any] = {
         "rain",
         "wind",
     ],
+    # 511GA traffic prioritization. Events are ranked deterministically so the
+    # board leads with the worst disruptions and lets minor ones slide off.
+    "traffic": {
+        "max_events": 6,   # show at most this many; lower-priority items drop off
+        # Case-insensitive regexes used to grade the road by importance.
+        "interstate_patterns": [
+            r"\bI[- ]?\d+\b",
+            r"\binterstate\b",
+        ],
+        "state_road_patterns": [
+            r"\bUS[- ]?\d+\b",
+            r"\bSR[- ]?\d+\b",
+            r"\bGA[- ]?\d+\b",
+            r"\bstate route\b",
+            r"\bhwy\b",
+            r"\bhighway\b",
+        ],
+    },
 }
 
 

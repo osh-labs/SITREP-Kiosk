@@ -242,9 +242,10 @@ class CommuteCurrentConditions:
 class TrafficEvent:
     text: str
     type: str   # crash | congestion | construction | incident | closure | other
+    priority: int = 0   # ranked importance; higher floats to the top of the list
 
     def to_dict(self) -> dict:
-        return {"text": self.text, "type": self.type}
+        return {"text": self.text, "type": self.type, "priority": self.priority}
 
 
 @dataclass
