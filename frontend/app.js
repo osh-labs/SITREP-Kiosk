@@ -513,10 +513,13 @@ function renderTempChart(state) {
   const hours = (Array.isArray(w.hourly) ? w.hourly : []).slice(0, 12);
   const src = (state.sources || {}).openmeteo || {};
   const temps = hours.map(h => h.temp_f).filter(v => v != null);
-  const heat  = hours.map(h => h.heat_index_f).filter(v => v != null);
+  // Feels-like (apparent temp): heat index when hot, wind chill when cold. Unlike
+  // the bare heat index — which equals air temp below 80°F and so overlaps the
+  // temp line in mild weather — this stays distinct and informative year-round.
+  const heat  = hours.map(h => h.feels_like_f).filter(v => v != null);
 
   if (temps.length < 2) {
-    $chartTemp.innerHTML = `${cardTitle('Temperature & Heat Index')}<div class="card-body"><div class="no-data-placeholder">&mdash;</div></div>`;
+    $chartTemp.innerHTML = `${cardTitle('Temperature & Feels-Like')}<div class="card-body"><div class="no-data-placeholder">&mdash;</div></div>`;
     return;
   }
   const W = 320, H = 120, PAD = 18;
@@ -524,7 +527,7 @@ function renderTempChart(state) {
   const minV = Math.min(...all) - 2, maxV = Math.max(...all) + 2;
   const span = (maxV - minV) || 1;
   const tPts = chartPoints(hours.map(h => h.temp_f != null ? h.temp_f : minV), W, H, PAD, minV, maxV);
-  const hPts = chartPoints(hours.map(h => h.heat_index_f != null ? h.heat_index_f : (h.temp_f != null ? h.temp_f : minV)), W, H, PAD, minV, maxV);
+  const hPts = chartPoints(hours.map(h => h.feels_like_f != null ? h.feels_like_f : (h.temp_f != null ? h.temp_f : minV)), W, H, PAD, minV, maxV);
 
   // Horizontal gridlines at every 10°F. SVG uses preserveAspectRatio="none" so
   // text inside the SVG would distort; labels go in the axis div instead.
@@ -548,7 +551,7 @@ function renderTempChart(state) {
   }).join('');
 
   $chartTemp.innerHTML = `
-    ${cardTitle('Temperature & Heat Index')}
+    ${cardTitle('Temperature & Feels-Like')}
     <div class="card-body chart-body">
       <div class="chart-with-axis">
         <div class="chart-y-axis">${axisLabels}</div>
@@ -561,7 +564,7 @@ function renderTempChart(state) {
           <div class="chart-ticks">${ticks}</div>
         </div>
       </div>
-      <div class="chart-legend"><span class="lg lg-temp">— Temp</span><span class="lg lg-heat">– – Heat Index</span></div>
+      <div class="chart-legend"><span class="lg lg-temp">— Temp</span><span class="lg lg-heat">– – Feels Like</span></div>
     </div>
     ${cardFooter(src)}`;
 }
@@ -607,7 +610,11 @@ function renderStatusStrip(state) {
   const w   = state.weather || {};
   const cur = w.current || {};
   const tod = w.today || {};
-  const aqi = (state.hazards || {}).aqi_callout || null;
+  // Always-on AQI reading (not the threshold-gated hazard callout), so good-air
+  // days show the actual value instead of "No data".
+  const aqi = (state.air_quality && state.air_quality.aqi != null)
+    ? state.air_quality
+    : ((state.hazards || {}).aqi_callout || null);
   const sources = state.sources || {};
 
   // Forecast headline: high + heat index when hot, otherwise high/low (winter).

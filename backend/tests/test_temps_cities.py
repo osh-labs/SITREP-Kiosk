@@ -44,11 +44,15 @@ def test_fetch_builds_labeled_geojson():
     assert len(out["features"]) == len(cities._DEFAULT_CITIES)
     f0 = out["features"][0]
     assert f0["geometry"]["type"] == "Point"
-    # GeoJSON is [lon, lat]; first default city is Atlanta.
+    # GeoJSON is [lon, lat]; placement matches the first default city.
     lon, lat = f0["geometry"]["coordinates"]
-    assert (round(lat, 3), round(lon, 3)) == (33.749, -84.388)
-    assert f0["properties"]["name"] == "Atlanta"
+    first = cities._DEFAULT_CITIES[0]
+    assert (round(lat, 3), round(lon, 3)) == (round(first["lat"], 3), round(first["lon"], 3))
+    assert f0["properties"]["name"] == first["name"]
     assert isinstance(f0["properties"]["temp_f"], int)
+    # Every default city is rendered.
+    names = {ft["properties"]["name"] for ft in out["features"]}
+    assert {"Paducah", "St. Augustine", "Atlanta"} <= names
 
 
 def test_fetch_requests_fahrenheit_current_temp():
