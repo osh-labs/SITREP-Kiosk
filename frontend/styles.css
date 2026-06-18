@@ -364,11 +364,22 @@ html, body {
 
 /* ── Charts (inline SVG) ────────────────────────────────────────────── */
 .chart-body { gap: 0.2rem; }
+/* Wrapper aligns the y-axis label column with the SVG + x-axis ticks */
+.chart-with-axis { display: flex; align-items: stretch; gap: 0.3rem; }
+.chart-y-axis {
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-size: var(--fs-xs); color: var(--text-muted); font-weight: 600;
+  text-align: right; flex-shrink: 0; padding: 0.1rem 0;
+}
+/* Column holding the SVG + x-axis ticks so both align to the same left edge */
+.chart-svg-col { display: flex; flex-direction: column; flex: 1 1 auto; gap: 0.1rem; }
 .spark { width: 100%; height: 9rem; }
 .spark-line { fill: none; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
 .spark-temp  { stroke: #ff8a5c; }
 .spark-heat  { stroke: #ffb84d; stroke-dasharray: 5 4; }
-.chart-axis { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--text-muted); }
+.chart-grid-line {
+  stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke;
+}
 .chart-ticks { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--text-muted); }
 .chart-legend { display: flex; gap: 1rem; font-size: var(--fs-xs); font-weight: 700; }
 .lg-temp { color: #ff8a5c; }
@@ -447,6 +458,9 @@ html, body {
 .map-degraded i { font-style: normal; }
 
 /* ── Radar frame transitions ────────────────────────────────────────── */
+/* Smooth the opacity swap between radar frames. Base-map opacity never
+   changes so this transition only fires on radar layer switches. */
+.leaflet-tile-pane > div { transition: opacity 0.1s linear; }
 /* Smooth the opacity swap between radar frames so any remaining timing
    variance doesn't produce a hard flash. Base-map opacity never changes
    so this transition only fires on radar layer switches. */
