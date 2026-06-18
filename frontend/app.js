@@ -705,28 +705,6 @@ function buildRadarFrames(cfg) {
     }
   };
 
-  const anim      = cfg.animation || {};
-  const opacity   = ((cfg.layers || {}).radar || {}).opacity != null ? cfg.layers.radar.opacity : 0.7;
-  const nFrames   = anim.enabled ? (anim.frames || 8) : 1;
-  const intervalMs = anim.interval_ms || 600;
-
-  const applyOpacity = () => radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? opacity : 0));
-
-  // Don't start the animation until every frame has finished loading its tiles.
-  // Until then the most-recent frame (offset=0) is shown statically so the map
-  // is never blank. Once all frames are in the browser tile cache, frame
-  // transitions are instant and complete — no partial-tile flicker.
-  let loadedCount = 0;
-  const onFrameLoad = () => {
-    loadedCount++;
-    if (loadedCount >= nFrames && anim.enabled && radarFrames.length > 1 && !radarTimer) {
-      radarTimer = setInterval(() => {
-        radarIdx = (radarIdx + 1) % radarFrames.length;
-        applyOpacity();
-      }, intervalMs);
-    }
-  };
-
   // Build layers oldest → newest; offset 0 = most recent frame (last in array).
   for (let i = 0; i < nFrames; i++) {
     const offset = (nFrames - 1 - i) * 5;
@@ -880,13 +858,24 @@ function resolveDataUrl() {
 
 const DATA_URL = resolveDataUrl();
 
+const FETCH_TIMEOUT_MS = 10000;
+
 async function fetchState() {
-  const resp = await fetch(DATA_URL, {
-    cache: 'no-store',
-    headers: { 'Accept': 'application/json' },
-  });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return await resp.json();
+  // Bound the request so a hung backend (e.g. mid-restart) can't leave the
+  // board pending forever — abort and let the poll loop retry instead.
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const resp = await fetch(DATA_URL, {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' },
+      signal: ctrl.signal,
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.json();
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 function setReconnecting(isRecon) {
@@ -906,10 +895,14 @@ async function poll() {
     const firstLoad = currentState === null;
     currentState = state;
     if (firstLoad) $loading.classList.add('hidden');
+    // A successful poll clears any earlier first-load error screen.
+    $errorScr.classList.remove('visible');
     renderDashboard(state);
   } catch (err) {
     console.warn('[SITREP] Fetch failed:', err.message);
     if (currentState === null) {
+      // First-load failure: surface the error but keep polling so the board
+      // recovers on its own once the backend is reachable (don't dead-end).
       $loading.classList.add('hidden');
       $errorDet.textContent = err.message || 'Network error';
       $errorScr.classList.add('visible');
@@ -933,5 +926,7 @@ function schedulePoll(state) {
 (async function init() {
   startClock();
   await poll();
-  if (currentState) schedulePoll(currentState);
+  // Always keep polling — even if the first load failed — so the board
+  // recovers when the backend comes up. schedulePoll tolerates a null state.
+  schedulePoll(currentState);
 })();
