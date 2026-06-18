@@ -120,6 +120,90 @@ def _alert_severity(event: str) -> str:
     return "info"
 
 
+# ---------------------------------------------------------------------------
+# Alert polygon resolution
+# ---------------------------------------------------------------------------
+# Most NWS alerts carry no inline geometry — they reference forecast/county zones
+# by URL (properties.affectedZones). Each zone's individual endpoint returns its
+# polygon (the batch /zones collection omits geometry), so we fetch each zone URL
+# once and cache it for the process lifetime. Without this, zone-based alerts
+# (often half of all active alerts) never draw on the map.
+_zone_geom_cache: dict[str, Optional[dict]] = {}
+
+# Max NEW individual zone fetches per poll, to stay polite with NWS. Cached zones
+# are free; uncached overflow fills in over subsequent polls. Severity ordering
+# (below) means the most urgent alerts' zones resolve first.
+_ZONE_LOOKUP_CAP = 75
+
+_SEV_RANK = {"extreme": 0, "danger": 1, "watch": 2, "advisory": 3, "info": 4}
+
+
+def _resolve_zone_geometries(client: Any, zone_urls: list[str], cap: int = _ZONE_LOOKUP_CAP) -> None:
+    """Fetch + cache geometry for any zone URLs not already cached, up to `cap`
+    new network fetches. Cached entries (including None) are never re-fetched."""
+    fetched = 0
+    for url in dict.fromkeys(zone_urls):
+        if url in _zone_geom_cache:
+            continue
+        if fetched >= cap:
+            break
+        fetched += 1
+        try:
+            r = client.get(url, headers=_headers(), timeout=10)
+            r.raise_for_status()
+            _zone_geom_cache[url] = r.json().get("geometry")
+        except Exception as exc:
+            log.debug("NWS zone geometry fetch failed (%s): %s", url, exc)
+            _zone_geom_cache[url] = None
+
+
+def _build_alerts_geojson(client: Any, features: list[dict]) -> dict[str, Any]:
+    """Turn raw NWS alert features into a FeatureCollection with real geometry,
+    resolving zone shapes for alerts that lack an inline polygon."""
+    # Most-severe alerts first so their zones resolve within the per-poll cap.
+    feats_sorted = sorted(
+        features,
+        key=lambda f: _SEV_RANK.get(_alert_severity((f.get("properties") or {}).get("event", "")), 9),
+    )
+
+    pending_zones: list[str] = []
+    for f in feats_sorted:
+        if f.get("geometry"):
+            continue
+        pending_zones.extend((f.get("properties") or {}).get("affectedZones", []) or [])
+    if pending_zones:
+        _resolve_zone_geometries(client, pending_zones)
+
+    out: list[dict] = []
+    for f in feats_sorted:
+        props = f.get("properties", {}) or {}
+        event = props.get("event", "")
+        base_props = {
+            "event": event,
+            "severity": _alert_severity(event),
+            "headline": props.get("headline", ""),
+            "areaDesc": props.get("areaDesc", ""),
+        }
+        geom = f.get("geometry")
+        if geom:
+            out.append({"type": "Feature", "properties": base_props, "geometry": geom})
+            continue
+        # No inline geometry — emit one feature per resolved affected zone.
+        for z in props.get("affectedZones", []) or []:
+            zg = _zone_geom_cache.get(z)
+            if zg:
+                out.append({"type": "Feature", "properties": base_props, "geometry": zg})
+    return {"type": "FeatureCollection", "features": out}
+
+
+def _alerts_area(config: Any) -> str:
+    """Comma-joined state codes the map alert overlay should cover."""
+    area = config.get("weather_map", "alerts", "area", default=None)
+    if isinstance(area, (list, tuple)) and area:
+        return ",".join(str(a).strip().upper() for a in area if str(a).strip())
+    return "GA,TN,AL,FL,SC,NC,KY"
+
+
 def _get_nws_meta(client: Any, lat: float, lon: float) -> dict[str, str]:
     """Fetch /points and cache the URLs. Returns {} on failure."""
     global _nws_meta
@@ -319,16 +403,12 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
     except Exception as exc:
         log.warning("NWS hourly failed: %s", exc)
 
-    # ── Active alerts ────────────────────────────────────────────────────────
+    # ── Active alerts (point — drives hazards/briefing for our location) ───────
     try:
         alerts_url = f"https://api.weather.gov/alerts/active?point={lat},{lon}"
         r = client.get(alerts_url, headers=_headers(), timeout=10)
         r.raise_for_status()
         features = r.json().get("features", [])
-        # Keep only features that carry polygon geometry for the map overlay.
-        # (Watches without geometry render as a banner in the frontend, not a shape.)
-        geo_features = [f for f in features if f.get("geometry")]
-        result["alerts_geojson"] = {"type": "FeatureCollection", "features": geo_features}
         alerts = []
         for f in features:
             props = f.get("properties", {})
@@ -355,6 +435,22 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
         result["alerts"] = alerts
     except Exception as exc:
         log.warning("NWS alerts failed: %s", exc)
+
+    # ── Alert polygons for the map (regional — covers the whole visible map) ───
+    # NWS alerts are mostly zone-based with null geometry; _build_alerts_geojson
+    # resolves the zone shapes so they actually draw. Querying by area (states)
+    # rather than a single point means the regional map shows every active alert
+    # in view, not just ones covering our point.
+    try:
+        area_url = f"https://api.weather.gov/alerts/active?area={_alerts_area(config)}"
+        r = client.get(area_url, headers=_headers(), timeout=15)
+        r.raise_for_status()
+        area_features = r.json().get("features", [])
+        result["alerts_geojson"] = _build_alerts_geojson(client, area_features)
+        log.info("NWS alert polygons: %d shapes from %d alerts",
+                 len(result["alerts_geojson"]["features"]), len(area_features))
+    except Exception as exc:
+        log.warning("NWS regional alert polygons failed: %s", exc)
 
     result["_ok"] = True
     return result

@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 
 from . import astro as astro_module
 from .models import (
+    AirQuality,
     AlertEvent,
     AstroBlock,
     BriefingBlock,
@@ -136,6 +137,19 @@ def _build_weather(
     return WeatherBlock(current=current, today=today, hourly=hourly, source=nws_source_block)
 
 
+def _build_air_quality(airnow_data: Optional[dict], airnow_sb: Any) -> AirQuality:
+    """Surface the current AQI at all levels (not threshold-gated like the callout)."""
+    if airnow_data and airnow_data.get("_ok") and airnow_data.get("aqi") is not None:
+        return AirQuality(
+            aqi=airnow_data.get("aqi"),
+            category=airnow_data.get("category"),
+            label=airnow_data.get("label"),
+            pollutant=airnow_data.get("pollutant"),
+            source=airnow_sb,
+        )
+    return AirQuality(source=airnow_sb)
+
+
 def _build_astro(now: Optional[datetime] = None) -> AstroBlock:
     """Compute moon phase deterministically (no source)."""
     data = astro_module.moon_phase(now)
@@ -149,8 +163,8 @@ def _build_astro(now: Optional[datetime] = None) -> AstroBlock:
 _DEFAULT_MAP_CONFIG = {
     "enabled": True,
     "center": {"lat": 33.7490, "lon": -84.3880},
-    "default_zoom": 8,
-    "min_zoom": 6,
+    "default_zoom": 7,
+    "min_zoom": 5,
     "max_zoom": 10,
     "base_style": "dark",
     "layers": {
@@ -160,6 +174,7 @@ _DEFAULT_MAP_CONFIG = {
     },
     "animation": {"enabled": True, "frames": 8, "interval_ms": 600, "refresh_seconds": 300},
     "rotation": {"enabled": True, "interval_seconds": 20, "modes": ["radar", "alerts", "temps"]},
+    "alerts": {"area": ["GA", "TN", "AL", "FL", "SC", "NC", "KY"]},
     # Cities for the temperature view; full default set in sources/openmeteo_cities.py.
     "temps": {"cities": []},
 }
@@ -419,6 +434,7 @@ def build_state(
     forecast.source = _combined_source("NWS FFC, SPC", [nws_sb, spc_sb])
 
     astro = _build_astro()
+    air_quality = _build_air_quality(airnow_data, airnow_sb)
     weather_map = _build_weather_map(config, weather_map_sb)
 
     sources_map = _build_sources_map(
@@ -431,6 +447,7 @@ def build_state(
         location=location,
         briefing=b_block,
         hazards=hazards,
+        air_quality=air_quality,
         weather=weather,
         commute=commute,
         disruptions=disruptions,

@@ -6,13 +6,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.388,
-          33.749
+          -88.6,
+          37.083
         ]
       },
       "properties": {
-        "name": "Atlanta",
-        "temp_f": 90
+        "name": "Paducah",
+        "temp_f": 85
       }
     },
     {
@@ -20,13 +20,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -83.378,
-          33.961
+          -90.049,
+          35.146
         ]
       },
       "properties": {
-        "name": "Athens",
-        "temp_f": 91
+        "name": "Memphis",
+        "temp_f": 89
       }
     },
     {
@@ -34,13 +34,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -83.632,
-          32.841
+          -86.781,
+          36.163
         ]
       },
       "properties": {
-        "name": "Macon",
-        "temp_f": 94
+        "name": "Nashville",
+        "temp_f": 88
       }
     },
     {
@@ -48,111 +48,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.988,
-          32.461
+          -83.921,
+          35.961
         ]
       },
       "properties": {
-        "name": "Columbus",
-        "temp_f": 93
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -81.975,
-          33.471
-        ]
-      },
-      "properties": {
-        "name": "Augusta",
-        "temp_f": 91
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -81.091,
-          32.081
-        ]
-      },
-      "properties": {
-        "name": "Savannah",
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.278,
-          30.833
-        ]
-      },
-      "properties": {
-        "name": "Valdosta",
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.281,
-          30.438
-        ]
-      },
-      "properties": {
-        "name": "Tallahassee",
-        "temp_f": 96
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -81.035,
-          34.001
-        ]
-      },
-      "properties": {
-        "name": "Columbia",
-        "temp_f": 91
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.394,
-          34.853
-        ]
-      },
-      "properties": {
-        "name": "Greenville",
-        "temp_f": 90
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.551,
-          35.595
-        ]
-      },
-      "properties": {
-        "name": "Asheville",
-        "temp_f": 86
+        "name": "Knoxville",
+        "temp_f": 89
       }
     },
     {
@@ -174,27 +76,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -86.781,
-          36.163
-        ]
-      },
-      "properties": {
-        "name": "Nashville",
-        "temp_f": 85
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           -86.586,
           34.73
         ]
       },
       "properties": {
         "name": "Huntsville",
-        "temp_f": 90
+        "temp_f": 88
       }
     },
     {
@@ -208,7 +96,329 @@
       },
       "properties": {
         "name": "Birmingham",
+        "temp_f": 90
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -87.569,
+          33.21
+        ]
+      },
+      "properties": {
+        "name": "Tuscaloosa",
+        "temp_f": 90
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -86.3,
+          32.367
+        ]
+      },
+      "properties": {
+        "name": "Montgomery",
+        "temp_f": 93
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -88.043,
+          30.694
+        ]
+      },
+      "properties": {
+        "name": "Mobile",
+        "temp_f": 93
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.39,
+          31.223
+        ]
+      },
+      "properties": {
+        "name": "Dothan",
+        "temp_f": 94
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -82.551,
+          35.595
+        ]
+      },
+      "properties": {
+        "name": "Asheville",
+        "temp_f": 87
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -80.843,
+          35.227
+        ]
+      },
+      "properties": {
+        "name": "Charlotte",
+        "temp_f": 88
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -82.394,
+          34.853
+        ]
+      },
+      "properties": {
+        "name": "Greenville",
+        "temp_f": 89
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.035,
+          34.001
+        ]
+      },
+      "properties": {
+        "name": "Columbia",
         "temp_f": 92
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.931,
+          32.776
+        ]
+      },
+      "properties": {
+        "name": "Charleston",
+        "temp_f": 92
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.388,
+          33.749
+        ]
+      },
+      "properties": {
+        "name": "Atlanta",
+        "temp_f": 89
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.378,
+          33.961
+        ]
+      },
+      "properties": {
+        "name": "Athens",
+        "temp_f": 89
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.975,
+          33.471
+        ]
+      },
+      "properties": {
+        "name": "Augusta",
+        "temp_f": 90
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.632,
+          32.841
+        ]
+      },
+      "properties": {
+        "name": "Macon",
+        "temp_f": 93
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.988,
+          32.461
+        ]
+      },
+      "properties": {
+        "name": "Columbus",
+        "temp_f": 94
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.156,
+          31.578
+        ]
+      },
+      "properties": {
+        "name": "Albany",
+        "temp_f": 95
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.091,
+          32.081
+        ]
+      },
+      "properties": {
+        "name": "Savannah",
+        "temp_f": 94
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.491,
+          31.15
+        ]
+      },
+      "properties": {
+        "name": "Brunswick",
+        "temp_f": 95
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.278,
+          30.833
+        ]
+      },
+      "properties": {
+        "name": "Valdosta",
+        "temp_f": 96
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.281,
+          30.438
+        ]
+      },
+      "properties": {
+        "name": "Tallahassee",
+        "temp_f": 96
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -87.217,
+          30.421
+        ]
+      },
+      "properties": {
+        "name": "Pensacola",
+        "temp_f": 94
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.66,
+          30.166
+        ]
+      },
+      "properties": {
+        "name": "Panama City",
+        "temp_f": 97
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.656,
+          30.332
+        ]
+      },
+      "properties": {
+        "name": "Jacksonville",
+        "temp_f": 95
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.313,
+          29.901
+        ]
+      },
+      "properties": {
+        "name": "St. Augustine",
+        "temp_f": 97
       }
     }
   ]

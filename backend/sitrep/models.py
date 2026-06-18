@@ -114,6 +114,30 @@ class AqiCallout:
 
 
 @dataclass
+class AirQuality:
+    """Current air quality, surfaced whenever AirNow has data (not threshold-gated).
+
+    The prominent hazard callout (HazardsBlock.aqi_callout) only appears above the
+    config threshold; this block carries the reading at all levels so the status
+    strip can always show it instead of "No data" on a clean-air day.
+    """
+    aqi: Optional[int] = None
+    category: Optional[str] = None
+    label: Optional[str] = None
+    pollutant: Optional[str] = None
+    source: Optional[SourceBlock] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "aqi": self.aqi,
+            "category": self.category,
+            "label": self.label,
+            "pollutant": self.pollutant,
+            "source": self.source.to_dict() if self.source else SourceBlock.empty("AirNow").to_dict(),
+        }
+
+
+@dataclass
 class HazardsBlock:
     ranked: list[RankedHazard] = field(default_factory=list)
     aqi_callout: Optional[AqiCallout] = None
@@ -397,6 +421,7 @@ class ConsolidatedState:
     location: LocationBlock = field(default_factory=LocationBlock)
     briefing: BriefingBlock = field(default_factory=BriefingBlock)
     hazards: HazardsBlock = field(default_factory=HazardsBlock)
+    air_quality: AirQuality = field(default_factory=AirQuality)
     weather: WeatherBlock = field(default_factory=WeatherBlock)
     commute: CommuteBlock = field(default_factory=CommuteBlock)
     disruptions: DisruptionsBlock = field(default_factory=DisruptionsBlock)
@@ -412,6 +437,7 @@ class ConsolidatedState:
             "location": self.location.to_dict(),
             "briefing": self.briefing.to_dict(),
             "hazards": self.hazards.to_dict(),
+            "air_quality": self.air_quality.to_dict(),
             "weather": self.weather.to_dict(),
             "commute": self.commute.to_dict(),
             "disruptions": self.disruptions.to_dict(),

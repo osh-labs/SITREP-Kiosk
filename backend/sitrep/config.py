@@ -74,8 +74,10 @@ _DEFAULTS: dict[str, Any] = {
     "weather_map": {
         "enabled": True,
         "center": {"lat": 33.7490, "lon": -84.3880},
-        "default_zoom": 8,
-        "min_zoom": 6,
+        # Zoom 7 widens the regional view to span Paducah KY → St. Augustine FL
+        # on the 4K kiosk, so all the temperature cities and alert polygons fit.
+        "default_zoom": 7,
+        "min_zoom": 5,
         "max_zoom": 10,
         "base_style": "dark",
         "layers": {
@@ -95,27 +97,15 @@ _DEFAULTS: dict[str, Any] = {
             "interval_seconds": 20,
             "modes": ["radar", "alerts", "temps"],
         },
+        # States the alert-polygon overlay covers (NWS /alerts/active?area=...).
+        "alerts": {
+            "area": ["GA", "TN", "AL", "FL", "SC", "NC", "KY"],
+        },
         # Cities shown on the temperature view (one keyless Open-Meteo bulk
-        # request). Defaults live in sources/openmeteo_cities.py; override here
-        # to change the set or labels.
+        # request). Empty -> the full default set in sources/openmeteo_cities.py
+        # (Paducah KY → St. Augustine FL). Override here to change the set.
         "temps": {
-            "cities": [
-                {"name": "Atlanta",     "lat": 33.749, "lon": -84.388},
-                {"name": "Athens",      "lat": 33.961, "lon": -83.378},
-                {"name": "Macon",       "lat": 32.841, "lon": -83.632},
-                {"name": "Columbus",    "lat": 32.461, "lon": -84.988},
-                {"name": "Augusta",     "lat": 33.471, "lon": -81.975},
-                {"name": "Savannah",    "lat": 32.081, "lon": -81.091},
-                {"name": "Valdosta",    "lat": 30.833, "lon": -83.278},
-                {"name": "Tallahassee", "lat": 30.438, "lon": -84.281},
-                {"name": "Columbia",    "lat": 34.001, "lon": -81.035},
-                {"name": "Greenville",  "lat": 34.853, "lon": -82.394},
-                {"name": "Asheville",   "lat": 35.595, "lon": -82.551},
-                {"name": "Chattanooga", "lat": 35.046, "lon": -85.310},
-                {"name": "Nashville",   "lat": 36.163, "lon": -86.781},
-                {"name": "Huntsville",  "lat": 34.730, "lon": -86.586},
-                {"name": "Birmingham",  "lat": 33.521, "lon": -86.809},
-            ],
+            "cities": [],
         },
     },
     "polling_seconds": {
