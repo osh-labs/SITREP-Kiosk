@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Optional
@@ -95,10 +96,22 @@ async def _lifespan(app: FastAPI):
         reason = "SITREP_DEMO=1" if os.environ.get("SITREP_DEMO") == "1" else "no API keys detected"
         log.warning("=== DEMO MODE ACTIVE (%s) === /api/state serves fixture data", reason)
     else:
-        log.info("Starting live mode — running initial poll cycle")
+        log.info("Starting live mode — scheduler + background initial load")
         try:
-            sched_module.initial_load()
+            # Start the periodic scheduler first, then run the first full poll
+            # cycle in a daemon thread. The initial cycle does blocking network
+            # I/O and an LLM call; running it inline here would block the async
+            # lifespan startup, and uvicorn serves NO routes (not even the
+            # frontend) until startup completes — leaving the kiosk frozen on
+            # the loading screen until every source and the briefing return.
+            # Off-thread, the server begins serving immediately and /api/state
+            # reports a degraded board until the cache is populated.
             sched_module.start_scheduler()
+            threading.Thread(
+                target=sched_module.initial_load,
+                name="initial-load",
+                daemon=True,
+            ).start()
         except Exception as exc:
             log.error("Scheduler startup failed: %s", exc)
 
@@ -141,10 +154,13 @@ def create_app() -> FastAPI:
         state = cache.get_state()
 
         if state is None:
-            # Cache not populated yet — return degraded fixture
-            log.warning("/api/state called before cache populated; returning degraded fixture")
+            # Cache not populated yet (warm-up window after start). Serve the
+            # degraded board with a 200 so the kiosk shows the degraded state
+            # immediately instead of hitting the frontend's fatal-error screen;
+            # it will switch to live data on the next poll once the cache fills.
+            log.warning("/api/state called before cache populated; returning degraded board")
             data = _load_fixture("degraded", cfg)
-            return JSONResponse(content=data, status_code=503)
+            return JSONResponse(content=data)
 
         return JSONResponse(content=state)
 

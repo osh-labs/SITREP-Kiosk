@@ -205,7 +205,10 @@ def generate_briefing(
 
     try:
         import anthropic  # lazy import — not required if no key
-        client = anthropic.Anthropic(api_key=api_key)
+        # Bound the call: the SDK default timeout is minutes with retries, which
+        # would stall the poll/initial-load thread. The board has a templated
+        # fallback, so fail fast and use it rather than hang.
+        client = anthropic.Anthropic(api_key=api_key, timeout=20.0, max_retries=1)
         prompt = _build_prompt(state_summary)
 
         message = client.messages.create(
