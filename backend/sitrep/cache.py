@@ -22,7 +22,7 @@ from .models import SourceBlock
 log = logging.getLogger(__name__)
 
 # Canonical source keys
-SOURCE_KEYS = ("nws", "spc", "ga511", "airnow", "openmeteo", "weather_map")
+SOURCE_KEYS = ("nws", "spc", "ga511", "airnow", "openmeteo", "temps", "weather_map")
 
 # Human-readable display names
 SOURCE_NAMES = {
@@ -31,6 +31,7 @@ SOURCE_NAMES = {
     "ga511": "511GA",
     "airnow": "AirNow",
     "openmeteo": "Open-Meteo",
+    "temps": "Open-Meteo Grid",
     "weather_map": "Weather Map",
 }
 

@@ -130,7 +130,7 @@ class TestStateCache:
     def test_all_source_blocks_returns_all_sources(self, fresh_cache):
         blocks = fresh_cache.get_all_source_blocks()
         assert set(blocks.keys()) == {
-            "nws", "spc", "ga511", "airnow", "openmeteo", "weather_map"
+            "nws", "spc", "ga511", "airnow", "openmeteo", "temps", "weather_map"
         }
 
     def test_staleness_update(self, fresh_cache):

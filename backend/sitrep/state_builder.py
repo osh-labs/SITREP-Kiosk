@@ -156,8 +156,12 @@ _DEFAULT_MAP_CONFIG = {
     "layers": {
         "radar": {"default_on": True, "opacity": 0.7},
         "alerts": {"default_on": True},
+        "temps": {"default_on": True, "opacity": 0.85},
     },
     "animation": {"enabled": True, "frames": 8, "interval_ms": 600, "refresh_seconds": 300},
+    "rotation": {"enabled": True, "interval_seconds": 20, "modes": ["radar", "alerts", "temps"]},
+    # Cities for the temperature view; full default set in sources/openmeteo_cities.py.
+    "temps": {"cities": []},
 }
 
 

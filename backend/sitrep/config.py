@@ -81,12 +81,41 @@ _DEFAULTS: dict[str, Any] = {
         "layers": {
             "radar": {"default_on": True, "opacity": 0.7},
             "alerts": {"default_on": True},
+            "temps": {"default_on": True, "opacity": 0.85},
         },
         "animation": {
             "enabled": True,
             "frames": 8,
             "interval_ms": 600,
             "refresh_seconds": 300,
+        },
+        # The map auto-rotates between these views; each shows for interval_seconds.
+        "rotation": {
+            "enabled": True,
+            "interval_seconds": 20,
+            "modes": ["radar", "alerts", "temps"],
+        },
+        # Cities shown on the temperature view (one keyless Open-Meteo bulk
+        # request). Defaults live in sources/openmeteo_cities.py; override here
+        # to change the set or labels.
+        "temps": {
+            "cities": [
+                {"name": "Atlanta",     "lat": 33.749, "lon": -84.388},
+                {"name": "Athens",      "lat": 33.961, "lon": -83.378},
+                {"name": "Macon",       "lat": 32.841, "lon": -83.632},
+                {"name": "Columbus",    "lat": 32.461, "lon": -84.988},
+                {"name": "Augusta",     "lat": 33.471, "lon": -81.975},
+                {"name": "Savannah",    "lat": 32.081, "lon": -81.091},
+                {"name": "Valdosta",    "lat": 30.833, "lon": -83.278},
+                {"name": "Tallahassee", "lat": 30.438, "lon": -84.281},
+                {"name": "Columbia",    "lat": 34.001, "lon": -81.035},
+                {"name": "Greenville",  "lat": 34.853, "lon": -82.394},
+                {"name": "Asheville",   "lat": 35.595, "lon": -82.551},
+                {"name": "Chattanooga", "lat": 35.046, "lon": -85.310},
+                {"name": "Nashville",   "lat": 36.163, "lon": -86.781},
+                {"name": "Huntsville",  "lat": 34.730, "lon": -86.586},
+                {"name": "Birmingham",  "lat": 33.521, "lon": -86.809},
+            ],
         },
     },
     "polling_seconds": {
@@ -95,6 +124,7 @@ _DEFAULTS: dict[str, Any] = {
         "airnow": 1800,
         "ga511": 90,
         "openmeteo": 900,
+        "temps": 900,
         "briefing": 1800,
     },
     "staleness_seconds": {
