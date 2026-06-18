@@ -1,9 +1,9 @@
-"""Tests for the gridded temperature layer: source parsing + /api/temps.geojson."""
+"""Tests for the city temperature layer: source parsing + /api/temps.geojson."""
 from starlette.testclient import TestClient
 
 from sitrep.app import create_app
 from sitrep.config import get_config
-from sitrep.sources import openmeteo_grid as grid
+from sitrep.sources import openmeteo_cities as cities
 
 
 class _FakeResp:
@@ -20,52 +20,57 @@ class _FakeResp:
 class _FakeClient:
     """Echoes a temperature for each requested coordinate."""
 
-    def __init__(self, payload=None, capture=None):
-        self._payload = payload
+    def __init__(self, capture=None):
         self._capture = capture
 
     def get(self, url, params=None, timeout=None):
         if self._capture is not None:
             self._capture.update(params or {})
-        if self._payload is not None:
-            return _FakeResp(self._payload)
-        lats = (params["latitude"]).split(",")
+        lats = params["latitude"].split(",")
+        lons = params["longitude"].split(",")
         items = [
             {"latitude": float(la), "longitude": float(lo),
              "current": {"temperature_2m": 80.0 + i}}
-            for i, (la, lo) in enumerate(zip(lats, params["longitude"].split(",")))
+            for i, (la, lo) in enumerate(zip(lats, lons))
         ]
         return _FakeResp(items)
 
 
-def test_grid_points_centered_and_sized():
-    pts = grid._grid_points(33.749, -84.388, 7, 7, 3.0)
-    assert len(pts) == 49
-    # Centered: the midpoint of the corners is the center.
-    assert pts[0] == (32.249, -85.888)
-    assert pts[-1] == (35.249, -82.888)
-
-
-def test_fetch_builds_geojson_from_multi_point_response():
+def test_fetch_builds_labeled_geojson():
     cfg = get_config()
-    out = grid.fetch(_FakeClient(), cfg)
+    out = cities.fetch(_FakeClient(), cfg)
     assert out["_ok"] is True
     assert out["type"] == "FeatureCollection"
-    assert len(out["features"]) == 49
+    assert len(out["features"]) == len(cities._DEFAULT_CITIES)
     f0 = out["features"][0]
     assert f0["geometry"]["type"] == "Point"
-    # GeoJSON is [lon, lat]; temps round to int.
+    # GeoJSON is [lon, lat]; first default city is Atlanta.
     lon, lat = f0["geometry"]["coordinates"]
-    assert (lat, lon) == (32.249, -85.888)
+    assert (round(lat, 3), round(lon, 3)) == (33.749, -84.388)
+    assert f0["properties"]["name"] == "Atlanta"
     assert isinstance(f0["properties"]["temp_f"], int)
 
 
-def test_fetch_requests_fahrenheit():
+def test_fetch_requests_fahrenheit_current_temp():
     cfg = get_config()
     captured: dict = {}
-    grid.fetch(_FakeClient(capture=captured), cfg)
+    cities.fetch(_FakeClient(capture=captured), cfg)
     assert captured["temperature_unit"] == "fahrenheit"
     assert captured["current"] == "temperature_2m"
+    # One coordinate per city in the bulk request.
+    assert len(captured["latitude"].split(",")) == len(cities._DEFAULT_CITIES)
+
+
+def test_config_cities_override_defaults():
+    class _Cfg:
+        def get(self, *keys, default=None):
+            if keys == ("weather_map", "temps", "cities"):
+                return [{"name": "Testville", "lat": 30.0, "lon": -83.0}]
+            return default
+
+    out = cities.fetch(_FakeClient(), _Cfg())
+    assert len(out["features"]) == 1
+    assert out["features"][0]["properties"]["name"] == "Testville"
 
 
 def test_fetch_handles_failure_gracefully():
@@ -73,7 +78,7 @@ def test_fetch_handles_failure_gracefully():
         def get(self, *a, **k):
             raise RuntimeError("network down")
 
-    out = grid.fetch(_Boom(), get_config())
+    out = cities.fetch(_Boom(), get_config())
     assert out["_ok"] is False
     assert out["features"] == []
 
@@ -89,6 +94,7 @@ def test_temps_geojson_demo_mode(demo_env):
         f = data["features"][0]
         assert f["geometry"]["type"] == "Point"
         assert "temp_f" in f["properties"]
+        assert "name" in f["properties"]
 
 
 def test_state_weather_map_has_rotation_and_temps(demo_env):

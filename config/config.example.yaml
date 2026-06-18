@@ -42,10 +42,23 @@ weather_map:
     enabled: true
     interval_seconds: 20          # how long each view shows
     modes: [radar, alerts, temps] # order of the rotation
-  temps:                          # grid sampled for the temperature view
-    grid_rows: 7                  # one keyless Open-Meteo bulk request
-    grid_cols: 7
-    span_deg: 3.0                 # degrees the grid spans, centered on the map
+  temps:                          # cities shown on the temperature view
+    cities:                       # one keyless Open-Meteo bulk request
+      - { name: Atlanta,     lat: 33.749, lon: -84.388 }
+      - { name: Athens,      lat: 33.961, lon: -83.378 }
+      - { name: Macon,       lat: 32.841, lon: -83.632 }
+      - { name: Columbus,    lat: 32.461, lon: -84.988 }
+      - { name: Augusta,     lat: 33.471, lon: -81.975 }
+      - { name: Savannah,    lat: 32.081, lon: -81.091 }
+      - { name: Valdosta,    lat: 30.833, lon: -83.278 }
+      - { name: Tallahassee, lat: 30.438, lon: -84.281 }
+      - { name: Columbia,    lat: 34.001, lon: -81.035 }
+      - { name: Greenville,  lat: 34.853, lon: -82.394 }
+      - { name: Asheville,   lat: 35.595, lon: -82.551 }
+      - { name: Chattanooga, lat: 35.046, lon: -85.310 }
+      - { name: Nashville,   lat: 36.163, lon: -86.781 }
+      - { name: Huntsville,  lat: 34.730, lon: -86.586 }
+      - { name: Birmingham,  lat: 33.521, lon: -86.809 }
 
 polling_seconds:
   nws: 900        # 10-15 min

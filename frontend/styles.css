@@ -505,15 +505,18 @@ html, body {
   width: 0.95rem; height: 0.95rem; border-radius: 3px; display: inline-block;
 }
 
-/* Temperature view markers — colored pills, legible across the room. */
+/* Temperature view markers — colored city pills, legible across the room. */
 .temp-dot { background: none; border: none; }
 .temp-dot span {
-  display: inline-block; transform: translate(-50%, -50%);
-  padding: 0.1rem 0.4rem; border-radius: 999px;
-  font-size: var(--fs-base); font-weight: 800; line-height: 1.1;
-  color: #0a0e14; border: 1px solid rgba(0, 0, 0, 0.35);
+  display: inline-flex; align-items: baseline; gap: 0.3rem;
+  transform: translate(-50%, -50%);
+  padding: 0.15rem 0.5rem; border-radius: 999px;
+  line-height: 1.1; color: #0a0e14;
+  border: 1px solid rgba(0, 0, 0, 0.35);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); white-space: nowrap;
 }
+.temp-dot b     { font-size: var(--fs-lg); font-weight: 800; }
+.temp-dot small { font-size: var(--fs-sm); font-weight: 700; opacity: 0.85; }
 
 .leaflet-container { background: #0a0e14; }
 .leaflet-control-attribution {

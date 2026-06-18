@@ -6,193 +6,12 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -85.888,
-          32.249
-        ]
-      },
-      "properties": {
-        "temp_f": 95
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.388,
-          32.249
-        ]
-      },
-      "properties": {
-        "temp_f": 95
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.888,
-          32.249
-        ]
-      },
-      "properties": {
-        "temp_f": 97
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
           -84.388,
-          32.249
+          33.749
         ]
       },
       "properties": {
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.888,
-          32.249
-        ]
-      },
-      "properties": {
-        "temp_f": 96
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.388,
-          32.249
-        ]
-      },
-      "properties": {
-        "temp_f": 95
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.888,
-          32.249
-        ]
-      },
-      "properties": {
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.888,
-          32.749
-        ]
-      },
-      "properties": {
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.388,
-          32.749
-        ]
-      },
-      "properties": {
-        "temp_f": 92
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.888,
-          32.749
-        ]
-      },
-      "properties": {
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.388,
-          32.749
-        ]
-      },
-      "properties": {
-        "temp_f": 92
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.888,
-          32.749
-        ]
-      },
-      "properties": {
-        "temp_f": 92
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.388,
-          32.749
-        ]
-      },
-      "properties": {
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.888,
-          32.749
-        ]
-      },
-      "properties": {
-        "temp_f": 95
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.888,
-          33.249
-        ]
-      },
-      "properties": {
+        "name": "Atlanta",
         "temp_f": 90
       }
     },
@@ -201,11 +20,12 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -85.388,
-          33.249
+          -83.378,
+          33.961
         ]
       },
       "properties": {
+        "name": "Athens",
         "temp_f": 91
       }
     },
@@ -214,11 +34,26 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.888,
-          33.249
+          -83.632,
+          32.841
         ]
       },
       "properties": {
+        "name": "Macon",
+        "temp_f": 94
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.988,
+          32.461
+        ]
+      },
+      "properties": {
+        "name": "Columbus",
         "temp_f": 93
       }
     },
@@ -227,76 +62,12 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.388,
-          33.249
+          -81.975,
+          33.471
         ]
       },
       "properties": {
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.888,
-          33.249
-        ]
-      },
-      "properties": {
-        "temp_f": 92
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.388,
-          33.249
-        ]
-      },
-      "properties": {
-        "temp_f": 92
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.888,
-          33.249
-        ]
-      },
-      "properties": {
-        "temp_f": 94
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.888,
-          33.749
-        ]
-      },
-      "properties": {
-        "temp_f": 88
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.388,
-          33.749
-        ]
-      },
-      "properties": {
+        "name": "Augusta",
         "temp_f": 91
       }
     },
@@ -305,12 +76,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.888,
-          33.749
+          -81.091,
+          32.081
         ]
       },
       "properties": {
-        "temp_f": 89
+        "name": "Savannah",
+        "temp_f": 94
       }
     },
     {
@@ -318,12 +90,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.388,
-          33.749
+          -83.278,
+          30.833
         ]
       },
       "properties": {
-        "temp_f": 89
+        "name": "Valdosta",
+        "temp_f": 94
       }
     },
     {
@@ -331,12 +104,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -83.888,
-          33.749
+          -84.281,
+          30.438
         ]
       },
       "properties": {
-        "temp_f": 88
+        "name": "Tallahassee",
+        "temp_f": 96
       }
     },
     {
@@ -344,24 +118,12 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -83.388,
-          33.749
+          -81.035,
+          34.001
         ]
       },
       "properties": {
-        "temp_f": 89
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.888,
-          33.749
-        ]
-      },
-      "properties": {
+        "name": "Columbia",
         "temp_f": 91
       }
     },
@@ -370,12 +132,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -85.888,
-          34.249
+          -82.394,
+          34.853
         ]
       },
       "properties": {
-        "temp_f": 87
+        "name": "Greenville",
+        "temp_f": 90
       }
     },
     {
@@ -383,11 +146,26 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -85.388,
-          34.249
+          -82.551,
+          35.595
         ]
       },
       "properties": {
+        "name": "Asheville",
+        "temp_f": 86
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.31,
+          35.046
+        ]
+      },
+      "properties": {
+        "name": "Chattanooga",
         "temp_f": 88
       }
     },
@@ -396,76 +174,12 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.888,
-          34.249
+          -86.781,
+          36.163
         ]
       },
       "properties": {
-        "temp_f": 89
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.388,
-          34.249
-        ]
-      },
-      "properties": {
-        "temp_f": 87
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.888,
-          34.249
-        ]
-      },
-      "properties": {
-        "temp_f": 88
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.388,
-          34.249
-        ]
-      },
-      "properties": {
-        "temp_f": 86
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.888,
-          34.249
-        ]
-      },
-      "properties": {
-        "temp_f": 86
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.888,
-          34.749
-        ]
-      },
-      "properties": {
+        "name": "Nashville",
         "temp_f": 85
       }
     },
@@ -474,12 +188,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -85.388,
-          34.749
+          -86.586,
+          34.73
         ]
       },
       "properties": {
-        "temp_f": 87
+        "name": "Huntsville",
+        "temp_f": 90
       }
     },
     {
@@ -487,155 +202,13 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -84.888,
-          34.749
+          -86.809,
+          33.521
         ]
       },
       "properties": {
-        "temp_f": 86
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.388,
-          34.749
-        ]
-      },
-      "properties": {
-        "temp_f": 85
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.888,
-          34.749
-        ]
-      },
-      "properties": {
-        "temp_f": 86
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.388,
-          34.749
-        ]
-      },
-      "properties": {
-        "temp_f": 86
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.888,
-          34.749
-        ]
-      },
-      "properties": {
-        "temp_f": 85
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.888,
-          35.249
-        ]
-      },
-      "properties": {
-        "temp_f": 85
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -85.388,
-          35.249
-        ]
-      },
-      "properties": {
-        "temp_f": 85
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.888,
-          35.249
-        ]
-      },
-      "properties": {
-        "temp_f": 83
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -84.388,
-          35.249
-        ]
-      },
-      "properties": {
-        "temp_f": 84
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.888,
-          35.249
-        ]
-      },
-      "properties": {
-        "temp_f": 84
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -83.388,
-          35.249
-        ]
-      },
-      "properties": {
-        "temp_f": 86
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -82.888,
-          35.249
-        ]
-      },
-      "properties": {
-        "temp_f": 85
+        "name": "Birmingham",
+        "temp_f": 92
       }
     }
   ]

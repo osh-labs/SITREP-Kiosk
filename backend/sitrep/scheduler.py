@@ -38,7 +38,7 @@ from .sources import spc as spc_source
 from .sources import ga511 as ga511_source
 from .sources import airnow as airnow_source
 from .sources import openmeteo as openmeteo_source
-from .sources import openmeteo_grid as openmeteo_grid_source
+from .sources import openmeteo_cities as openmeteo_cities_source
 
 log = logging.getLogger(__name__)
 
@@ -214,16 +214,16 @@ def _poll_temps() -> None:
     cache = get_cache()
     client = _get_http_client()
     try:
-        data = openmeteo_grid_source.fetch(client, cfg)
+        data = openmeteo_cities_source.fetch(client, cfg)
         if data.get("_ok"):
             cache.update("temps", data)
-            log.info("Temp-grid poll OK (%d points)", len(data.get("features", [])))
+            log.info("City-temps poll OK (%d cities)", len(data.get("features", [])))
         else:
             cache.mark_failed("temps")
-            log.warning("Temp-grid poll returned not-ok")
+            log.warning("City-temps poll returned not-ok")
     except Exception as exc:
         cache.mark_failed("temps")
-        log.error("Temp-grid poll exception: %s", exc)
+        log.error("City-temps poll exception: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -409,7 +409,7 @@ def start_scheduler() -> BackgroundScheduler:
         _poll_temps,
         trigger=IntervalTrigger(seconds=ps.get("temps", 900)),
         id="poll_temps",
-        name="Temp-grid poller",
+        name="City-temps poller",
         replace_existing=True,
         coalesce=True,
         misfire_grace_time=120,

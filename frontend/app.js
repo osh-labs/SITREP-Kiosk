@@ -780,13 +780,15 @@ async function fetchTemps() {
     const gj = await resp.json();
     tempLayer.clearLayers();
     (gj.features || []).forEach(ft => {
+      const props = ft.properties || {};
       const coords = (ft.geometry || {}).coordinates;
-      const t = (ft.properties || {}).temp_f;
+      const t = props.temp_f;
       if (!coords || t == null) return;
       const [lon, lat] = coords;
+      const name = props.name ? `<small>${esc(props.name)}</small>` : '';
       const icon = L.divIcon({
         className: 'temp-dot',
-        html: `<span style="background:${tempColor(t)}">${Math.round(t)}&deg;</span>`,
+        html: `<span style="background:${tempColor(t)}"><b>${Math.round(t)}&deg;</b>${name}</span>`,
         iconSize: null,
       });
       L.marker([lat, lon], { icon, interactive: false, keyboard: false }).addTo(tempLayer);

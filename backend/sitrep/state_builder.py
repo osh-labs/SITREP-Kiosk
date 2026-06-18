@@ -160,7 +160,8 @@ _DEFAULT_MAP_CONFIG = {
     },
     "animation": {"enabled": True, "frames": 8, "interval_ms": 600, "refresh_seconds": 300},
     "rotation": {"enabled": True, "interval_seconds": 20, "modes": ["radar", "alerts", "temps"]},
-    "temps": {"grid_rows": 7, "grid_cols": 7, "span_deg": 3.0},
+    # Cities for the temperature view; full default set in sources/openmeteo_cities.py.
+    "temps": {"cities": []},
 }
 
 
