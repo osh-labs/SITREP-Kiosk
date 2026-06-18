@@ -76,7 +76,7 @@ _DEFAULTS: dict[str, Any] = {
         "center": {"lat": 33.7490, "lon": -84.3880},
         # Zoom 7 widens the regional view to span Paducah KY → St. Augustine FL
         # on the 4K kiosk, so all the temperature cities and alert polygons fit.
-        "default_zoom": 7,
+        "default_zoom": 9,
         "min_zoom": 5,
         "max_zoom": 10,
         "base_style": "dark",
