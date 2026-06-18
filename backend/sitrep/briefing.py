@@ -1,7 +1,7 @@
 """
 M2: BLUF briefing generation.
 
-Calls Anthropic SDK (claude-sonnet-4-6) with the validated structured state
+Calls Anthropic SDK (claude-haiku-4-5) with the validated structured state
 and ranked hazard flags in the analyst-brief voice.
 
 HARD RULE: the model writes prose only and must NOT emit numeric values.
@@ -31,7 +31,7 @@ from typing import Any, Optional
 
 log = logging.getLogger(__name__)
 
-_MODEL = "claude-sonnet-4-6"
+_MODEL = "claude-haiku-4-5-20251001"
 
 # ---------------------------------------------------------------------------
 # Template fallback
