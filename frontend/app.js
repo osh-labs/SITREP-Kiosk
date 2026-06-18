@@ -633,36 +633,48 @@ function alertOnEach(feature, layer) {
 }
 
 function buildRadarFrames(cfg) {
-  // Remove old frames
   radarFrames.forEach(l => map.removeLayer(l));
   radarFrames = [];
   if (radarTimer) { clearInterval(radarTimer); radarTimer = null; }
 
-  const anim = cfg.animation || {};
-  const opacity = ((cfg.layers || {}).radar || {}).opacity != null ? cfg.layers.radar.opacity : 0.7;
-  const nFrames = anim.enabled ? (anim.frames || 8) : 1;
+  const anim      = cfg.animation || {};
+  const opacity   = ((cfg.layers || {}).radar || {}).opacity != null ? cfg.layers.radar.opacity : 0.7;
+  const nFrames   = anim.enabled ? (anim.frames || 8) : 1;
+  const intervalMs = anim.interval_ms || 600;
 
-  // offsets oldest → newest, e.g. 35,30,...,0 for 8 frames
+  const applyOpacity = () => radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? opacity : 0));
+
+  // Don't start the animation until every frame has finished loading its tiles.
+  // Until then the most-recent frame (offset=0) is shown statically so the map
+  // is never blank. Once all frames are in the browser tile cache, frame
+  // transitions are instant and complete — no partial-tile flicker.
+  let loadedCount = 0;
+  const onFrameLoad = () => {
+    loadedCount++;
+    if (loadedCount >= nFrames && anim.enabled && radarFrames.length > 1 && !radarTimer) {
+      radarTimer = setInterval(() => {
+        radarIdx = (radarIdx + 1) % radarFrames.length;
+        applyOpacity();
+      }, intervalMs);
+    }
+  };
+
+  // Build layers oldest → newest; offset 0 = most recent frame (last in array).
   for (let i = 0; i < nFrames; i++) {
     const offset = (nFrames - 1 - i) * 5;
     const layer = L.tileLayer(radarTileUrl(offset), {
       opacity: 0, maxZoom: 12, zIndex: 200 + i,
       attribution: 'Radar: NWS via Iowa Environmental Mesonet',
     });
+    layer.once('load', onFrameLoad);
     layer.addTo(map);
     radarFrames.push(layer);
   }
 
+  // Show the most-recent frame immediately while older frames warm up.
   radarIdx = radarFrames.length - 1;
-  const applyOpacity = () => radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? opacity : 0));
   applyOpacity();
 
-  if (anim.enabled && radarFrames.length > 1) {
-    radarTimer = setInterval(() => {
-      radarIdx = (radarIdx + 1) % radarFrames.length;
-      applyOpacity();
-    }, anim.interval_ms || 600);
-  }
   radarBuiltAt = Date.now();
 }
 
