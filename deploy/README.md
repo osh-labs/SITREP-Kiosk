@@ -396,11 +396,30 @@ The M3 criterion is met when:
 
 ## 7. Updating and restarting
 
-### Pull latest code
+### One-step update (recommended)
+
+`deploy/update.sh` pulls the latest code, reinstalls Python deps only if
+`requirements.txt` changed, and restarts the backend. **Run it as the kiosk
+user** (the repo owner), not root — this keeps git's ownership check happy and
+avoids root-owned files:
+
+```bash
+sudo -u kiosk bash /opt/sitrep/deploy/update.sh
+```
+
+Flags: `--branch NAME` (pull a specific branch), `--no-restart`, `--no-deps`.
+The script refuses to run if it isn't the repo owner or if tracked files have
+uncommitted changes (your `config.yaml`/`.env` are gitignored and untouched).
+
+> The Chromium kiosk caches the static frontend, so after a frontend change
+> reboot the mini PC or restart the kiosk session — restarting the backend
+> alone won't reload `index.html`/`app.js`/`styles.css`.
+
+### Pull latest code manually
 
 ```bash
 cd /opt/sitrep
-git pull
+sudo -u kiosk git pull        # run as the repo owner to avoid "dubious ownership"
 ```
 
 ### Re-run the installer (always safe)
