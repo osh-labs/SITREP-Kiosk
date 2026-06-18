@@ -647,7 +647,13 @@ function stripItem(icon, label, value, sub = '') {
 
 function alertSeverityFromProps(props) {
   const ev = String(props.event || '').toLowerCase();
-  if (/(tornado warning|flash flood warning|severe thunderstorm warning|ice storm warning|extreme)/.test(ev)) return 'extreme';
+  // Specific watch/warning types with NWS-convention colors
+  if (/tornado warning/.test(ev))              return 'danger';   // red
+  if (/severe thunderstorm warning/.test(ev))  return 'danger';   // red
+  if (/tornado watch/.test(ev))                return 'caution';  // orange
+  if (/severe thunderstorm watch/.test(ev))    return 'advisory'; // yellow
+  // Other high-impact warnings stay extreme (purple)
+  if (/(flash flood warning|ice storm warning|extreme)/.test(ev)) return 'extreme';
   if (ev.includes('warning')) return 'danger';
   if (ev.includes('watch')) return 'watch';
   if (ev.includes('advisory')) return 'advisory';
