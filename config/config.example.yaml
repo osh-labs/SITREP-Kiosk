@@ -41,7 +41,7 @@ weather_map:
   rotation:                       # auto-cycle the map between views
     enabled: true
     interval_seconds: 20          # how long each view shows
-    modes: [radar, alerts, temps] # order of the rotation
+    modes: [radar, alerts, temps, traffic] # order of the rotation
   alerts:                         # alert-polygon overlay coverage
     area: [GA, TN, AL, FL, SC, NC, KY]   # NWS /alerts/active?area=... (states in view)
   temps:                          # cities shown on the temperature view
