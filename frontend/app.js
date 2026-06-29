@@ -1,7 +1,7 @@
 /* =========================================================================
    Field SITREP Board — app.js
-   Plain vanilla JS, no build step, no framework. Leaflet is the only library
-   (vendored locally). Fetches /api/state (or a local fixture for dev) and
+   Plain vanilla JS, no build step, no framework. MapLibre GL JS is the only
+   library (vendored locally). Fetches /api/state (or a local fixture for dev) and
    renders ONE unified situational dashboard (no carousel).
 
    Dev fixture usage:  ?fixture=morning | afternoon | degraded
@@ -14,6 +14,8 @@ const DEFAULT_REFRESH_S = 30;
 const API_ENDPOINT      = '/api/state';
 const ALERTS_ENDPOINT   = '/api/alerts.geojson';
 const TEMPS_ENDPOINT    = '/api/temps.geojson';
+
+/* app.js now uses MapLibre GL JS (vector tiles) instead of Leaflet. */
 
 /* Severity metadata — icon shape + label so color is never the only cue */
 const SEV_META = {
@@ -114,27 +116,14 @@ const SPC_LABELS = {
 };
 
 /* CARTO / OSM base tile choices (keyless) */
-const BASE_TILES = {
-  voyager: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
-  },
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
-  },
-  dark_nolabels: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
-    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
-  },
-  light: {
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    options: { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors, &copy; CARTO' },
-  },
-  osm: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    options: { subdomains: 'abc', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' },
-  },
+/* OpenFreeMap vector tile style URLs — no API key required.
+   Mapped from the base_style config names used by the Leaflet era. */
+const VECTOR_STYLES = {
+  dark:          'https://tiles.openfreemap.org/styles/dark',
+  dark_nolabels: 'https://tiles.openfreemap.org/styles/dark',
+  voyager:       'https://tiles.openfreemap.org/styles/liberty',
+  light:         'https://tiles.openfreemap.org/styles/positron',
+  osm:           'https://tiles.openfreemap.org/styles/liberty',
 };
 
 /* IEM NEXRAD N0Q composite radar tiles (keyless). offset 0 = most recent. */
@@ -150,19 +139,19 @@ let clockTimer    = null;
 let reconnecting  = false;
 
 /* Map state (created once, then refreshed in place) */
-let map          = null;
-let baseLayer    = null;
-let alertLayer   = null;
-let tempLayer    = null;   // L.layerGroup of temperature markers
-let radarFrames  = [];     // array of Leaflet tileLayers, oldest → newest
-let radarTimer   = null;
-let radarIdx     = 0;
-let radarBuiltAt = 0;      // epoch ms when frames last rebuilt
-let mapInited    = false;
-let mapCfg       = {};     // last weather_map config (for rotation handlers)
-let mapMode      = null;   // active rotation view: 'radar' | 'alerts' | 'temps'
-let mapModes     = [];     // ordered rotation views from config
+let map           = null;
+let mapStyleLoaded = false;
+let tempMarkers   = [];    // maplibregl.Marker instances for the temps view
+let radarFrameCount = 0;   // how many radar sources/layers are currently added
+let radarTimer    = null;
+let radarIdx      = 0;
+let radarBuiltAt  = 0;     // epoch ms when frames last rebuilt
+let mapInited     = false;
+let mapCfg        = {};    // last weather_map config (for rotation handlers)
+let mapMode       = null;  // active rotation view: 'radar' | 'alerts' | 'temps'
+let mapModes      = [];    // ordered rotation views from config
 let rotationTimer = null;
+let alertPopup    = null;  // reusable popup for alert hover tooltips
 
 /* ── DOM refs ────────────────────────────────────────────────────────────── */
 const $loading   = document.getElementById('loading-screen');
@@ -691,23 +680,24 @@ const SEV_COLORS = {
   extreme:  '#b56cff',
 };
 
-function alertStyle(feature) {
-  const sev = alertSeverityFromProps(feature.properties || {});
-  const color = SEV_COLORS[sev] || SEV_COLORS.info;
-  return { color, weight: 2, fillColor: color, fillOpacity: 0.18 };
-}
-
-function alertOnEach(feature, layer) {
-  const p = feature.properties || {};
-  const sev = alertSeverityFromProps(p);
-  const m = SEV_META[sev] || SEV_META.info;
-  layer.bindTooltip(`${m.icon} ${esc(p.event || 'Alert')}`, { sticky: true });
-}
+/* MapLibre GL expression that maps the pre-processed '_sev' property to a color. */
+const SEV_COLOR_EXPR = ['match', ['get', '_sev'],
+  'watch',    '#3fbf6b',
+  'advisory', '#e6b800',
+  'caution',  '#ed7a2f',
+  'danger',   '#ef5350',
+  'extreme',  '#b56cff',
+  /* default (info) */ '#4aa3ff',
+];
 
 function buildRadarFrames(cfg) {
-  radarFrames.forEach(l => map.removeLayer(l));
-  radarFrames = [];
+  // Remove any existing radar sources + layers from a previous build.
   if (radarTimer) { clearInterval(radarTimer); radarTimer = null; }
+  for (let i = 0; i < radarFrameCount; i++) {
+    if (map.getLayer(`radar-layer-${i}`)) map.removeLayer(`radar-layer-${i}`);
+    if (map.getSource(`radar-frame-${i}`)) map.removeSource(`radar-frame-${i}`);
+  }
+  radarFrameCount = 0;
 
   const anim       = cfg.animation || {};
   const opacity    = ((cfg.layers || {}).radar || {}).opacity != null ? cfg.layers.radar.opacity : 0.7;
@@ -718,51 +708,69 @@ function buildRadarFrames(cfg) {
   // showing, so the animation timer can't flash radar over temps/alerts.
   const applyOpacity = () => {
     const show = mapMode === null || mapMode === 'radar';
-    radarFrames.forEach((l, i) => l.setOpacity(show && i === radarIdx ? opacity : 0));
+    for (let i = 0; i < radarFrameCount; i++) {
+      if (map.getLayer(`radar-layer-${i}`)) {
+        map.setPaintProperty(`radar-layer-${i}`, 'raster-opacity',
+          show && i === radarIdx ? opacity : 0);
+      }
+    }
   };
 
   // Don't start the animation until every frame has finished loading its tiles.
   // Until then the most-recent frame (offset=0) is shown statically so the map
   // is never blank. Once all frames are in the browser tile cache, frame
   // transitions are instant and complete — no partial-tile flicker.
-  let loadedCount = 0;
-  const onFrameLoad = () => {
-    loadedCount++;
-    if (loadedCount >= nFrames && anim.enabled && radarFrames.length > 1 && !radarTimer) {
-      radarTimer = setInterval(() => {
-        radarIdx = (radarIdx + 1) % radarFrames.length;
-        applyOpacity();
-      }, intervalMs);
+  const loadedSources = new Set();
+  const sourcedataHandler = (e) => {
+    if (e.isSourceLoaded && e.sourceId && e.sourceId.startsWith('radar-frame-') &&
+        !loadedSources.has(e.sourceId)) {
+      loadedSources.add(e.sourceId);
+      if (loadedSources.size >= nFrames && anim.enabled && nFrames > 1 && !radarTimer) {
+        map.off('sourcedata', sourcedataHandler);
+        radarTimer = setInterval(() => {
+          radarIdx = (radarIdx + 1) % radarFrameCount;
+          applyOpacity();
+        }, intervalMs);
+      }
     }
   };
+  map.on('sourcedata', sourcedataHandler);
 
-  // Build layers oldest → newest; offset 0 = most recent frame (last in array).
+  // Build sources + layers oldest → newest; offset 0 = most recent frame (last).
   for (let i = 0; i < nFrames; i++) {
     const offset = (nFrames - 1 - i) * 5;
-    const layer = L.tileLayer(radarTileUrl(offset), {
-      opacity: 0, maxZoom: 12, zIndex: 200 + i,
+    map.addSource(`radar-frame-${i}`, {
+      type: 'raster',
+      tiles: [radarTileUrl(offset)],
+      tileSize: 256,
       attribution: 'Radar: NWS via Iowa Environmental Mesonet',
     });
-    layer.once('load', onFrameLoad);
-    layer.addTo(map);
-    radarFrames.push(layer);
+    map.addLayer({
+      id: `radar-layer-${i}`,
+      type: 'raster',
+      source: `radar-frame-${i}`,
+      paint: { 'raster-opacity': 0 },
+    });
   }
 
   // Show the most-recent frame immediately while older frames warm up.
-  radarIdx = radarFrames.length - 1;
+  radarFrameCount = nFrames;
+  radarIdx = radarFrameCount - 1;
   applyOpacity();
-
   radarBuiltAt = Date.now();
 }
 
 async function fetchAlerts() {
-  if (!alertLayer) return;
+  if (!map || !mapStyleLoaded) return;
   try {
     const resp = await fetch(ALERTS_ENDPOINT, { cache: 'no-store' });
     if (!resp.ok) return;
     const gj = await resp.json();
-    alertLayer.clearLayers();
-    alertLayer.addData(gj);
+    // Pre-process severity so MapLibre GL expressions can reference '_sev'.
+    (gj.features || []).forEach(f => {
+      f.properties._sev = alertSeverityFromProps(f.properties || {});
+    });
+    map.getSource('alerts').setData(gj);
   } catch (e) {
     /* alerts are best-effort; the radar + base map still render */
   }
@@ -793,26 +801,36 @@ function tempColor(f) {
 }
 
 async function fetchTemps() {
-  if (!tempLayer) return;
+  if (!map || !mapStyleLoaded) return;
   try {
     const resp = await fetch(TEMPS_ENDPOINT, { cache: 'no-store' });
     if (!resp.ok) return;
     const gj = await resp.json();
-    tempLayer.clearLayers();
+
+    // Remove old HTML markers before rebuilding.
+    tempMarkers.forEach(m => m.remove());
+    tempMarkers = [];
+
     (gj.features || []).forEach(ft => {
       const props = ft.properties || {};
       const coords = (ft.geometry || {}).coordinates;
       const t = props.temp_f;
       if (!coords || t == null) return;
       const [lon, lat] = coords;
-      const name = props.name ? `<small>${esc(props.name)}</small>` : '';
-      const icon = L.divIcon({
-        className: 'temp-dot',
-        html: `<span style="background:${tempColor(t)}"><b>${Math.round(t)}&deg;</b>${name}</span>`,
-        iconSize: null,
-      });
-      L.marker([lat, lon], { icon, interactive: false, keyboard: false }).addTo(tempLayer);
+
+      const el = document.createElement('div');
+      el.className = 'temp-dot';
+      el.setAttribute('aria-hidden', 'true');
+      const nameHtml = props.name ? `<small>${esc(props.name)}</small>` : '';
+      el.innerHTML = `<span style="background:${tempColor(t)}"><b>${Math.round(t)}&deg;</b>${nameHtml}</span>`;
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([lon, lat]);
+      tempMarkers.push(marker);
     });
+
+    // If the temps view is active, add them to the map immediately.
+    if (mapMode === 'temps') tempMarkers.forEach(m => m.addTo(map));
   } catch (e) {
     /* temps are best-effort; the radar + base map still render */
   }
@@ -825,28 +843,71 @@ function initMap(state) {
     document.getElementById('card-map').classList.add('hidden');
     return;
   }
-  const center = cfg.center || { lat: 33.749, lon: -84.388 };
-  map = L.map('map', {
-    zoomControl: false,
-    attributionControl: true,
-    minZoom: cfg.min_zoom || 6,
+
+  const center   = cfg.center || { lat: 33.749, lon: -84.388 };
+  const styleUrl = VECTOR_STYLES[cfg.base_style] || VECTOR_STYLES.dark;
+
+  map = new maplibregl.Map({
+    container: 'map',
+    style: styleUrl,
+    center: [center.lon, center.lat],  // MapLibre: [lon, lat] order
+    zoom: cfg.default_zoom || 8,
+    minZoom: cfg.min_zoom || 5,
     maxZoom: cfg.max_zoom || 10,
-    dragging: true, scrollWheelZoom: false,
-  }).setView([center.lat, center.lon], cfg.default_zoom || 8);
+    attributionControl: true,
+    scrollZoom: false,
+  });
 
-  const base = BASE_TILES[cfg.base_style] || BASE_TILES.dark;
-  baseLayer = L.tileLayer(base.url, base.options).addTo(map);
+  map.on('load', () => {
+    mapStyleLoaded = true;
 
-  // Radar frames stay on the map (opacity toggled by the active view); the
-  // alert and temperature layers are added/removed by the rotation.
-  buildRadarFrames(cfg);
-  alertLayer = L.geoJSON(null, { style: alertStyle, onEachFeature: alertOnEach });
-  tempLayer  = L.layerGroup();
-  fetchAlerts();
-  fetchTemps();
+    // Alert GeoJSON source + fill/outline layers (hidden until alerts view).
+    map.addSource('alerts', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    map.addLayer({
+      id: 'alert-fill',
+      type: 'fill',
+      source: 'alerts',
+      layout: { visibility: 'none' },
+      paint: { 'fill-color': SEV_COLOR_EXPR, 'fill-opacity': 0.18 },
+    });
+    map.addLayer({
+      id: 'alert-outline',
+      type: 'line',
+      source: 'alerts',
+      layout: { visibility: 'none' },
+      paint: { 'line-color': SEV_COLOR_EXPR, 'line-width': 2 },
+    });
 
-  addMapControls(cfg);
-  startMapRotation(cfg);
+    // Alert hover tooltip using a reusable Popup.
+    alertPopup = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      className: 'alert-popup',
+    });
+    map.on('mouseenter', 'alert-fill', (e) => {
+      map.getCanvas().style.cursor = 'pointer';
+      const props = (e.features[0] || {}).properties || {};
+      const m = SEV_META[props._sev] || SEV_META.info;
+      alertPopup.setLngLat(e.lngLat)
+        .setHTML(`${m.icon} ${esc(props.event || 'Alert')}`)
+        .addTo(map);
+    });
+    map.on('mouseleave', 'alert-fill', () => {
+      map.getCanvas().style.cursor = '';
+      alertPopup.remove();
+    });
+
+    // Radar frames stay on the map (opacity toggled by the active view).
+    buildRadarFrames(cfg);
+    fetchAlerts();
+    fetchTemps();
+
+    addMapControls(cfg);
+    startMapRotation(cfg);
+  });
 
   mapInited = true;
 }
@@ -860,21 +921,32 @@ const MODE_META = {
 /* Show exactly one rotation view; radar opacity is toggled rather than the
    layer removed so the warmed-up frame cache and animation timer survive. */
 function showMapMode(mode) {
-  if (!map) return;
+  if (!map || !mapStyleLoaded) return;
   mapMode = mode;
+
   const radarOp = ((mapCfg.layers || {}).radar || {}).opacity != null
     ? mapCfg.layers.radar.opacity : 0.7;
-  radarFrames.forEach((l, i) => l.setOpacity(mode === 'radar' && i === radarIdx ? radarOp : 0));
 
-  if (mode === 'alerts') { if (alertLayer && !map.hasLayer(alertLayer)) map.addLayer(alertLayer); }
-  else if (alertLayer && map.hasLayer(alertLayer)) map.removeLayer(alertLayer);
-
-  if (mode === 'temps') {
-    if (tempLayer) {
-      tempLayer.setZIndex && tempLayer.setZIndex(400);
-      if (!map.hasLayer(tempLayer)) map.addLayer(tempLayer);
+  // Radar: toggle opacity per frame rather than removing the layers so the
+  // tile cache stays warm through view switches.
+  for (let i = 0; i < radarFrameCount; i++) {
+    if (map.getLayer(`radar-layer-${i}`)) {
+      map.setPaintProperty(`radar-layer-${i}`, 'raster-opacity',
+        mode === 'radar' && i === radarIdx ? radarOp : 0);
     }
-  } else if (tempLayer && map.hasLayer(tempLayer)) map.removeLayer(tempLayer);
+  }
+
+  // Alerts: toggle visibility on both fill and outline layers.
+  const alertVis = mode === 'alerts' ? 'visible' : 'none';
+  if (map.getLayer('alert-fill'))   map.setLayoutProperty('alert-fill',    'visibility', alertVis);
+  if (map.getLayer('alert-outline')) map.setLayoutProperty('alert-outline', 'visibility', alertVis);
+
+  // Temps: add/remove HTML marker elements.
+  if (mode === 'temps') {
+    tempMarkers.forEach(m => m.addTo(map));
+  } else {
+    tempMarkers.forEach(m => m.remove());
+  }
 
   updateMapChrome(mode);
 }
@@ -897,24 +969,24 @@ function startMapRotation(cfg) {
 }
 
 /* Top-right view indicator + bottom-left legend, both updated per active view. */
-function addMapControls(cfg) {
-  const ind = L.control({ position: 'topright' });
-  ind.onAdd = () => {
-    const div = L.DomUtil.create('div', 'map-mode');
-    div.id = 'map-mode';
-    L.DomEvent.disableClickPropagation(div);
-    return div;
-  };
-  ind.addTo(map);
+function addMapControls(_cfg) {
+  class SimpleControl {
+    constructor(id, cls, position) {
+      this._id = id; this._cls = cls; this._pos = position;
+    }
+    onAdd() {
+      const div = document.createElement('div');
+      div.id = this._id;
+      div.className = `maplibregl-ctrl ${this._cls}`;
+      div.addEventListener('click', e => e.stopPropagation());
+      this._container = div;
+      return div;
+    }
+    onRemove() { this._container?.parentNode?.removeChild(this._container); }
+  }
 
-  const leg = L.control({ position: 'bottomleft' });
-  leg.onAdd = () => {
-    const div = L.DomUtil.create('div', 'map-legend hidden');
-    div.id = 'map-legend';
-    L.DomEvent.disableClickPropagation(div);
-    return div;
-  };
-  leg.addTo(map);
+  map.addControl(new SimpleControl('map-mode',   'map-mode',          'top-right'));
+  map.addControl(new SimpleControl('map-legend', 'map-legend hidden', 'bottom-left'));
 }
 
 function updateMapChrome(mode) {
@@ -953,7 +1025,7 @@ function renderMap(state) {
     mapCfg = cfg;
     const anim = cfg.animation || {};
     const refreshMs = (anim.refresh_seconds || 300) * 1000;
-    if (Date.now() - radarBuiltAt >= refreshMs) {
+    if (mapStyleLoaded && Date.now() - radarBuiltAt >= refreshMs) {
       buildRadarFrames(cfg);
       showMapMode(mapMode);  // re-assert the active view after a frame rebuild
     }
@@ -969,7 +1041,7 @@ function renderMap(state) {
   } else {
     $mapDegraded.classList.add('hidden');
   }
-  if (map) setTimeout(() => map.invalidateSize(), 0);
+  if (map) setTimeout(() => map.resize(), 0);
 }
 
 /* ── Master render ──────────────────────────────────────────────────────── */
