@@ -829,6 +829,9 @@ async function fetchTemps() {
       tempMarkers.push(marker);
     });
 
+    // Feed the same data to the heatmap source.
+    if (map.getSource('temps-heat')) map.getSource('temps-heat').setData(gj);
+
     // If the temps view is active, add them to the map immediately.
     if (mapMode === 'temps') tempMarkers.forEach(m => m.addTo(map));
   } catch (e) {
@@ -880,6 +883,49 @@ function initMap(state) {
       layout: { visibility: 'none' },
       paint: { 'line-color': SEV_COLOR_EXPR, 'line-width': 2 },
     });
+
+    // Temperature heatmap — inserted before the first symbol layer so city
+    // names and road labels remain on top of the shading.
+    const firstSymbolLayer = map.getStyle().layers.find(l => l.type === 'symbol')?.id;
+    map.addSource('temps-heat', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    map.addLayer({
+      id: 'temps-heatmap',
+      type: 'heatmap',
+      source: 'temps-heat',
+      maxzoom: 12,
+      layout: { visibility: 'none' },
+      paint: {
+        // Weight driven by temperature so hotter stations push the color up.
+        'heatmap-weight': [
+          'interpolate', ['linear'], ['get', 'temp_f'],
+          20, 0,
+          105, 1,
+        ],
+        // Spread wide enough to fill metro area with sparse station coverage.
+        'heatmap-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          5, 60,
+          10, 130,
+        ],
+        // Density → temperature colour palette (cold blue → hot red).
+        'heatmap-color': [
+          'interpolate', ['linear'], ['heatmap-density'],
+          0,    'rgba(91,143,255,0)',
+          0.15, 'rgba(86,198,232,0.45)',
+          0.3,  'rgba(75,208,160,0.5)',
+          0.5,  'rgba(126,198,74,0.55)',
+          0.65, 'rgba(227,201,59,0.58)',
+          0.8,  'rgba(239,154,61,0.6)',
+          0.9,  'rgba(236,106,58,0.62)',
+          1,    'rgba(216,57,47,0.65)',
+        ],
+        'heatmap-intensity': 1.3,
+        'heatmap-opacity': 0.55,
+      },
+    }, firstSymbolLayer);
 
     // Alert hover tooltip using a reusable Popup.
     alertPopup = new maplibregl.Popup({
@@ -941,7 +987,9 @@ function showMapMode(mode) {
   if (map.getLayer('alert-fill'))   map.setLayoutProperty('alert-fill',    'visibility', alertVis);
   if (map.getLayer('alert-outline')) map.setLayoutProperty('alert-outline', 'visibility', alertVis);
 
-  // Temps: add/remove HTML marker elements.
+  // Temps: show heatmap shading behind the pills, then add/remove pill markers.
+  const heatVis = mode === 'temps' ? 'visible' : 'none';
+  if (map.getLayer('temps-heatmap')) map.setLayoutProperty('temps-heatmap', 'visibility', heatVis);
   if (mode === 'temps') {
     tempMarkers.forEach(m => m.addTo(map));
   } else {
