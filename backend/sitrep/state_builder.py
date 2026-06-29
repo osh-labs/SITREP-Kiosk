@@ -201,6 +201,11 @@ def _traffic_events(ga511_data: Optional[dict], max_events: Optional[int]) -> li
                 text=ev["text"],
                 type=ev["type"],
                 priority=int(ev.get("priority", 0)),
+                lat=ev.get("lat"),
+                lon=ev.get("lon"),
+                lat2=ev.get("lat2"),
+                lon2=ev.get("lon2"),
+                polyline=ev.get("polyline", ""),
             ))
     # ga511 already sorts; re-sort defensively so cached/fixture data is ordered too.
     items.sort(key=lambda t: t.priority, reverse=True)

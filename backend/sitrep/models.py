@@ -267,9 +267,23 @@ class TrafficEvent:
     text: str
     type: str   # crash | congestion | construction | incident | closure | other
     priority: int = 0   # ranked importance; higher floats to the top of the list
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    lat2: Optional[float] = None   # secondary point for extended events
+    lon2: Optional[float] = None
+    polyline: str = ""             # encoded polyline of the event extent
 
     def to_dict(self) -> dict:
-        return {"text": self.text, "type": self.type, "priority": self.priority}
+        return {
+            "text": self.text,
+            "type": self.type,
+            "priority": self.priority,
+            "lat": self.lat,
+            "lon": self.lon,
+            "lat2": self.lat2,
+            "lon2": self.lon2,
+            "polyline": self.polyline,
+        }
 
 
 @dataclass

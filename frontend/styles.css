@@ -515,6 +515,36 @@ html, body {
 .temp-dot b     { font-size: var(--fs-lg); font-weight: 800; }
 .temp-dot small { font-size: var(--fs-sm); font-weight: 700; opacity: 0.9; }
 
+/* Traffic incident markers — colored badge + road label, legible at distance. */
+.traffic-pin { background: none; border: none; }
+.traffic-pin__inner {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transform: translate(-50%, -50%);
+}
+.traffic-pin__badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 2.4rem; height: 2.4rem; border-radius: 50%;
+  font-size: 1.1rem; font-weight: 900; color: #fff;
+  border: 2.5px solid rgba(255, 255, 255, 0.88);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+  position: relative;
+}
+/* Downward stem — tiny triangle anchoring the badge to the coordinate point */
+.traffic-pin__badge::after {
+  content: ''; position: absolute; bottom: -8px; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid var(--pin-color, #6b7280);
+}
+.traffic-pin__label {
+  font-size: 0.85rem; font-weight: 800; color: var(--text-primary); letter-spacing: 0.01em;
+  background: rgba(10, 14, 20, 0.82); padding: 1px 6px; border-radius: 3px;
+  white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  margin-top: 5px; /* clear the stem */
+}
+
 /* ── MapLibre GL dark theme tweaks ──────────────────────────────────── */
 .maplibregl-map { background: #0a0e14; }
 .maplibregl-ctrl-attrib {

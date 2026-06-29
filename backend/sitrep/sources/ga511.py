@@ -141,17 +141,16 @@ def _event_to_text(event: dict) -> str:
     """Build a short human-readable traffic event text."""
     road = event.get("RoadwayName", "") or event.get("road", "") or ""
     direction = event.get("DirectionOfTravel", "") or event.get("direction", "") or ""
-    location = event.get("LocationDescription", "") or event.get("location", "") or ""
-    description = event.get("EventDescription", "") or event.get("description", "") or ""
-    subtype = event.get("EventSubType", "") or event.get("subtype", "") or ""
+    # Real API field is "Description"; lowercase alias kept for test fixtures.
+    description = event.get("Description", "") or event.get("description", "") or ""
+    # Real API field is "Subtype"; lowercase alias kept for test fixtures.
+    subtype = event.get("Subtype", "") or event.get("subtype", "") or ""
 
     parts = []
     if road:
         parts.append(road)
     if direction:
         parts.append(direction)
-    if location:
-        parts.append(f"@ {location}")
     if not parts and description:
         return description[:120]
 
@@ -159,7 +158,6 @@ def _event_to_text(event: dict) -> str:
     if subtype and subtype.lower() not in summary.lower():
         summary = f"{summary} — {subtype}"
     elif description:
-        # Append a short snippet of description if it adds context
         desc_short = description[:80].rstrip()
         summary = f"{summary} — {desc_short}"
 
@@ -214,7 +212,8 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
 
     for ev in events:
         event_type = (ev.get("EventType", ev.get("type", "")) or "").strip()
-        subtype = (ev.get("EventSubType", ev.get("subtype", "")) or "").strip()
+        # Real API field is "Subtype"; lowercase alias kept for test fixtures.
+        subtype = (ev.get("Subtype", ev.get("subtype", "")) or "").strip()
 
         # Classify as traffic event or alert
         is_alert = "advisory" in event_type.lower() or "hazard" in event_type.lower()
@@ -236,6 +235,11 @@ def fetch(client: Any, config: Any) -> dict[str, Any]:
                 "text": text,
                 "type": etype,
                 "priority": _priority(road_class, etype),
+                "lat": ev.get("Latitude"),
+                "lon": ev.get("Longitude"),
+                "lat2": ev.get("LatitudeSecondary"),
+                "lon2": ev.get("LongitudeSecondary"),
+                "polyline": ev.get("EncodedPolyline") or "",
             })
 
     # Worst disruptions lead; ties keep source order (stable sort).
