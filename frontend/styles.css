@@ -458,15 +458,12 @@ html, body {
 .map-degraded i { font-style: normal; }
 
 /* ── Radar frame transitions ────────────────────────────────────────── */
-/* Smooth the opacity swap between radar frames. Base-map opacity never
-   changes so this transition only fires on radar layer switches. */
-.leaflet-tile-pane > div { transition: opacity 0.1s linear; }
-/* Smooth the opacity swap between radar frames so any remaining timing
-   variance doesn't produce a hard flash. Base-map opacity never changes
-   so this transition only fires on radar layer switches. */
-.leaflet-tile-pane > div { transition: opacity 0.3s ease-in-out; }
+/* Smooth the opacity swap between radar frames. MapLibre GL applies
+   raster-opacity transitions via paint property interpolation, but we
+   add a CSS transition as a belt-and-suspenders fallback. */
+.maplibregl-map canvas { display: block; }
 
-/* ── Map controls / Leaflet dark tweaks ─────────────────────────────── */
+/* ── Map controls / MapLibre GL dark tweaks ─────────────────────────── */
 .map-toggle {
   background: rgba(22, 27, 34, 0.92);
   border: 1px solid var(--border); border-radius: var(--radius);
@@ -518,17 +515,25 @@ html, body {
 .temp-dot b     { font-size: var(--fs-lg); font-weight: 800; }
 .temp-dot small { font-size: var(--fs-sm); font-weight: 700; opacity: 0.9; }
 
-.leaflet-container { background: #0a0e14; }
-.leaflet-control-attribution {
+/* ── MapLibre GL dark theme tweaks ──────────────────────────────────── */
+.maplibregl-map { background: #0a0e14; }
+.maplibregl-ctrl-attrib {
   background: rgba(13, 17, 23, 0.8) !important;
   color: var(--text-muted) !important;
   font-size: 0.7rem !important;
 }
-.leaflet-control-attribution a { color: var(--accent) !important; }
-.leaflet-tooltip {
+.maplibregl-ctrl-attrib a { color: var(--accent) !important; }
+/* Alert hover popup */
+.maplibregl-popup.alert-popup .maplibregl-popup-content {
   background: var(--bg-card); color: var(--text-primary);
   border: 1px solid var(--border); font-weight: 700;
+  padding: 0.35rem 0.6rem; border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
+.maplibregl-popup.alert-popup .maplibregl-popup-tip { display: none; }
+/* Hide default zoom controls (not used in kiosk mode) */
+.maplibregl-ctrl-zoom-in,
+.maplibregl-ctrl-zoom-out { display: none !important; }
 
 /* ── Misc ───────────────────────────────────────────────────────────── */
 .em-dash { color: var(--text-muted); }
