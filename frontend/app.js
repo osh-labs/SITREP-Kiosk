@@ -910,9 +910,9 @@ function initMap(state) {
         // so the radius needs to be at least 1.5× that to fill the gaps.
         'heatmap-radius': [
           'interpolate', ['linear'], ['zoom'],
-          4,  120,
-          7,  220,
-          10, 360,
+          4,  600,
+          7,  1100,
+          10, 1800,
         ],
         // Density → temperature colour palette (cold blue → hot red).
         // A faint cool floor at density 0 fills any residual gaps between
