@@ -904,25 +904,31 @@ function initMap(state) {
           20, 0,
           105, 1,
         ],
-        // Spread wide enough to fill metro area with sparse station coverage.
+        // Radius must exceed the inter-city pixel distance so adjacent
+        // Gaussians overlap and merge into a continuous field rather than
+        // discrete blobs. Cities are ~100–200 px apart at the kiosk zoom,
+        // so the radius needs to be at least 1.5× that to fill the gaps.
         'heatmap-radius': [
           'interpolate', ['linear'], ['zoom'],
-          5, 60,
-          10, 130,
+          4,  120,
+          7,  220,
+          10, 360,
         ],
         // Density → temperature colour palette (cold blue → hot red).
+        // A faint cool floor at density 0 fills any residual gaps between
+        // stations so the whole region shows shading rather than dark voids.
         'heatmap-color': [
           'interpolate', ['linear'], ['heatmap-density'],
-          0,    'rgba(91,143,255,0)',
-          0.15, 'rgba(86,198,232,0.45)',
-          0.3,  'rgba(75,208,160,0.5)',
-          0.5,  'rgba(126,198,74,0.55)',
-          0.65, 'rgba(227,201,59,0.58)',
-          0.8,  'rgba(239,154,61,0.6)',
+          0,    'rgba(91,143,255,0.08)',
+          0.1,  'rgba(86,198,232,0.35)',
+          0.25, 'rgba(75,208,160,0.48)',
+          0.45, 'rgba(126,198,74,0.53)',
+          0.6,  'rgba(227,201,59,0.56)',
+          0.75, 'rgba(239,154,61,0.59)',
           0.9,  'rgba(236,106,58,0.62)',
           1,    'rgba(216,57,47,0.65)',
         ],
-        'heatmap-intensity': 1.3,
+        'heatmap-intensity': 2.5,
         'heatmap-opacity': 0.55,
       },
     }, firstSymbolLayer);
