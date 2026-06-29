@@ -47,6 +47,21 @@ const EVENT_ICONS = {
   default:      '●',
 };
 
+/* Traffic incident pin metadata — icon + color by event type */
+const TRAFFIC_PIN_META = {
+  crash:        { icon: '✖', color: '#ef5350', label: 'Crash'        },
+  incident:     { icon: '⚠', color: '#ed7a2f', label: 'Incident'     },
+  construction: { icon: '⚒', color: '#e6b800', label: 'Construction' },
+  congestion:   { icon: '≡', color: '#f59e0b', label: 'Congestion'   },
+  closure:      { icon: '⊘', color: '#c0392b', label: 'Closure'      },
+  other:        { icon: '●', color: '#6b7280', label: 'Other'        },
+};
+
+/* Atlanta metro bounding box [SW, NE] for the traffic map view.
+   North edge sits at the GA/TN/NC state line (~35°N); covers all of
+   metro Atlanta and the surrounding counties field crews operate in. */
+const ATLANTA_METRO_BOUNDS = [[-85.2, 33.25], [-83.8, 35.0]];
+
 /* Weather icon SVGs — inline, no network dependency */
 const WEATHER_ICONS = {
   storm: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -132,6 +147,23 @@ function radarTileUrl(offsetMin) {
   return `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913${suffix}/{z}/{x}/{y}.png`;
 }
 
+/* Decode a Google-encoded polyline string into GeoJSON [lon, lat] pairs. */
+function decodePolyline(encoded) {
+  if (!encoded) return [];
+  const coords = [];
+  let i = 0, lat = 0, lng = 0;
+  while (i < encoded.length) {
+    let b, shift = 0, result = 0;
+    do { b = encoded.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+    shift = 0; result = 0;
+    do { b = encoded.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+    coords.push([lng / 1e5, lat / 1e5]); // GeoJSON order: [lon, lat]
+  }
+  return coords;
+}
+
 /* ── State ──────────────────────────────────────────────────────────────── */
 let currentState  = null;
 let fetchTimer    = null;
@@ -142,6 +174,7 @@ let reconnecting  = false;
 let map           = null;
 let mapStyleLoaded = false;
 let tempMarkers   = [];    // maplibregl.Marker instances for the temps view
+let trafficMarkers = [];   // maplibregl.Marker instances for the traffic view
 let radarFrameCount = 0;   // how many radar sources/layers are currently added
 let radarTimer    = null;
 let radarIdx      = 0;
@@ -952,10 +985,35 @@ function initMap(state) {
       alertPopup.remove();
     });
 
+    // Traffic incident polylines — hidden until the traffic view is active.
+    map.addSource('traffic-routes', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    map.addLayer({
+      id: 'traffic-routes',
+      type: 'line',
+      source: 'traffic-routes',
+      layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': ['match', ['get', 'type'],
+          'crash',        '#ef5350',
+          'construction', '#e6b800',
+          'congestion',   '#f59e0b',
+          'closure',      '#c0392b',
+          'incident',     '#ed7a2f',
+          '#6b7280',
+        ],
+        'line-width': 4,
+        'line-opacity': 0.85,
+      },
+    }, firstSymbolLayer);
+
     // Radar frames stay on the map (opacity toggled by the active view).
     buildRadarFrames(cfg);
     fetchAlerts();
     fetchTemps();
+    if (currentState) updateTrafficLayer(currentState);
 
     addMapControls(cfg);
     startMapRotation(cfg);
@@ -965,15 +1023,17 @@ function initMap(state) {
 }
 
 const MODE_META = {
-  radar:  { label: 'Weather Radar' },
-  alerts: { label: 'Watches &amp; Warnings' },
-  temps:  { label: 'Temperature' },
+  radar:   { label: 'Weather Radar' },
+  alerts:  { label: 'Watches &amp; Warnings' },
+  temps:   { label: 'Temperature' },
+  traffic: { label: 'Traffic Incidents' },
 };
 
 /* Show exactly one rotation view; radar opacity is toggled rather than the
    layer removed so the warmed-up frame cache and animation timer survive. */
 function showMapMode(mode) {
   if (!map || !mapStyleLoaded) return;
+  const prevMode = mapMode;
   mapMode = mode;
 
   const radarOp = ((mapCfg.layers || {}).radar || {}).opacity != null
@@ -1002,12 +1062,26 @@ function showMapMode(mode) {
     tempMarkers.forEach(m => m.remove());
   }
 
+  // Traffic: incident pins + polylines; fit to Atlanta metro then restore on exit.
+  const routeVis = mode === 'traffic' ? 'visible' : 'none';
+  if (map.getLayer('traffic-routes')) map.setLayoutProperty('traffic-routes', 'visibility', routeVis);
+  if (mode === 'traffic') {
+    trafficMarkers.forEach(m => m.addTo(map));
+    map.fitBounds(ATLANTA_METRO_BOUNDS, { padding: 20, duration: 800 });
+  } else {
+    trafficMarkers.forEach(m => m.remove());
+    if (prevMode === 'traffic') {
+      const c = mapCfg.center || { lat: 33.749, lon: -84.388 };
+      map.flyTo({ center: [c.lon, c.lat], zoom: mapCfg.default_zoom || 7, duration: 800 });
+    }
+  }
+
   updateMapChrome(mode);
 }
 
 function startMapRotation(cfg) {
   const rot = cfg.rotation || {};
-  const modes = (rot.modes && rot.modes.length) ? rot.modes.slice() : ['radar', 'alerts', 'temps'];
+  const modes = (rot.modes && rot.modes.length) ? rot.modes.slice() : ['radar', 'alerts', 'temps', 'traffic'];
   mapModes = modes;
   if (rotationTimer) { clearInterval(rotationTimer); rotationTimer = null; }
 
@@ -1065,10 +1139,77 @@ function updateMapChrome(mode) {
     leg.innerHTML = items.map(([k, lbl]) =>
       `<span class="legend-swatch"><i style="background:${SEV_COLORS[k]}"></i>${lbl}</span>`).join('');
     leg.classList.remove('hidden');
+  } else if (mode === 'traffic') {
+    leg.innerHTML = Object.entries(TRAFFIC_PIN_META)
+      .filter(([k]) => k !== 'other')
+      .map(([, m]) =>
+        `<span class="legend-swatch"><i style="background:${m.color}"></i>${m.icon} ${m.label}</span>`)
+      .join('');
+    leg.classList.remove('hidden');
   } else {
     leg.classList.add('hidden');
     leg.innerHTML = '';
   }
+}
+
+/* Build/refresh traffic incident markers and polylines from the current state.
+   Called on first map load and on every state poll. */
+function updateTrafficLayer(state) {
+  if (!map || !mapStyleLoaded) return;
+
+  // Merge disruptions + commute traffic, de-duped by text so the same event
+  // that appears in both arrays only gets one pin.
+  const seen = new Set();
+  const events = [];
+  for (const ev of [
+    ...((state.disruptions || {}).traffic || []),
+    ...((state.commute || {}).traffic || []),
+  ]) {
+    if (!seen.has(ev.text)) { seen.add(ev.text); events.push(ev); }
+  }
+
+  // Rebuild HTML markers.
+  trafficMarkers.forEach(m => m.remove());
+  trafficMarkers = [];
+
+  const routeFeatures = [];
+
+  for (const ev of events) {
+    if (ev.lat != null && ev.lon != null) {
+      const meta = TRAFFIC_PIN_META[ev.type] || TRAFFIC_PIN_META.other;
+      const label = (ev.text || '').split(/\s/)[0]; // road token, e.g. "I-285"
+      const el = document.createElement('div');
+      el.className = 'traffic-pin';
+      el.setAttribute('title', ev.text || '');
+      el.setAttribute('aria-label', ev.text || '');
+      el.innerHTML =
+        `<div class="traffic-pin__inner">` +
+          `<span class="traffic-pin__badge" style="background:${meta.color};--pin-color:${meta.color};">${meta.icon}</span>` +
+          (label ? `<span class="traffic-pin__label">${esc(label)}</span>` : '') +
+        `</div>`;
+      trafficMarkers.push(
+        new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([ev.lon, ev.lat])
+      );
+    }
+
+    if (ev.polyline) {
+      const coords = decodePolyline(ev.polyline);
+      if (coords.length >= 2) {
+        routeFeatures.push({
+          type: 'Feature',
+          properties: { type: ev.type || 'other' },
+          geometry: { type: 'LineString', coordinates: coords },
+        });
+      }
+    }
+  }
+
+  if (map.getSource('traffic-routes')) {
+    map.getSource('traffic-routes').setData({ type: 'FeatureCollection', features: routeFeatures });
+  }
+
+  // If already in traffic mode, add the freshly built markers immediately.
+  if (mapMode === 'traffic') trafficMarkers.forEach(m => m.addTo(map));
 }
 
 function renderMap(state) {
@@ -1085,6 +1226,7 @@ function renderMap(state) {
     }
     fetchAlerts();
     fetchTemps();
+    updateTrafficLayer(state);
   }
 
   // Degraded overlay driven by the map source freshness.
