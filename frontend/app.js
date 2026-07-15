@@ -17,14 +17,15 @@ const TEMPS_ENDPOINT    = '/api/temps.geojson';
 
 /* app.js now uses MapLibre GL JS (vector tiles) instead of Leaflet. */
 
-/* Severity metadata — icon shape + label so color is never the only cue */
+/* Severity metadata — Phosphor icon name + label so color is never the only cue.
+   Distinct icon shapes reinforce severity beyond color (PRD NFR-7). */
 const SEV_META = {
-  info:     { icon: 'ℹ',  label: 'INFO',     cls: 'sev-info'     },
-  watch:    { icon: '◉',  label: 'WATCH',    cls: 'sev-watch'    },
-  advisory: { icon: '⚑',  label: 'ADVISORY', cls: 'sev-advisory' },
-  caution:  { icon: '⚠',  label: 'CAUTION',  cls: 'sev-caution'  },
-  danger:   { icon: '▲',  label: 'DANGER',   cls: 'sev-danger'   },
-  extreme:  { icon: '◆',  label: 'EXTREME',  cls: 'sev-extreme'  },
+  info:     { icon: 'info',            label: 'INFO',     cls: 'sev-info'     },
+  watch:    { icon: 'binoculars',      label: 'WATCH',    cls: 'sev-watch'    },
+  advisory: { icon: 'flag',            label: 'ADVISORY', cls: 'sev-advisory' },
+  caution:  { icon: 'warning',         label: 'CAUTION',  cls: 'sev-caution'  },
+  danger:   { icon: 'warning-octagon', label: 'DANGER',   cls: 'sev-danger'   },
+  extreme:  { icon: 'siren',           label: 'EXTREME',  cls: 'sev-extreme'  },
 };
 
 /* Overall-risk label derived deterministically from the top ranked hazard.
@@ -38,23 +39,23 @@ const RISK_FROM_SEVERITY = {
   extreme:  { label: 'SEVERE',   cls: 'sev-extreme'  },
 };
 
-/* Traffic/alert event icons — shape reinforces meaning beyond color */
+/* Traffic/alert event icons (Phosphor names) — shape reinforces meaning */
 const EVENT_ICONS = {
-  crash:        '✖',
-  incident:     '⚠',
-  construction: '⚒',
-  congestion:   '≡',
-  default:      '●',
+  crash:        'car',
+  incident:     'warning',
+  construction: 'traffic-cone',
+  congestion:   'traffic-sign',
+  default:      'map-pin',
 };
 
-/* Traffic incident pin metadata — icon + color by event type */
+/* Traffic incident pin metadata — Phosphor icon name + color by event type */
 const TRAFFIC_PIN_META = {
-  crash:        { icon: '✖', color: '#ef5350', label: 'Crash'        },
-  incident:     { icon: '⚠', color: '#ed7a2f', label: 'Incident'     },
-  construction: { icon: '⚒', color: '#e6b800', label: 'Construction' },
-  congestion:   { icon: '≡', color: '#f59e0b', label: 'Congestion'   },
-  closure:      { icon: '⊘', color: '#c0392b', label: 'Closure'      },
-  other:        { icon: '●', color: '#6b7280', label: 'Other'        },
+  crash:        { icon: 'car',          color: '#ef5350', label: 'Crash'        },
+  incident:     { icon: 'warning',      color: '#ed7a2f', label: 'Incident'     },
+  construction: { icon: 'traffic-cone', color: '#e6b800', label: 'Construction' },
+  congestion:   { icon: 'traffic-sign', color: '#f59e0b', label: 'Congestion'   },
+  closure:      { icon: 'prohibit',     color: '#c0392b', label: 'Closure'      },
+  other:        { icon: 'map-pin',      color: '#6b7280', label: 'Other'        },
 };
 
 /* Atlanta metro bounding box [SW, NE] for the traffic map view.
@@ -62,62 +63,16 @@ const TRAFFIC_PIN_META = {
    metro Atlanta and the surrounding counties field crews operate in. */
 const ATLANTA_METRO_BOUNDS = [[-85.2, 33.25], [-83.8, 35.0]];
 
-/* Weather icon SVGs — inline, no network dependency */
+/* Weather icons — Phosphor icon name + tint. Rendered via ph() (vendored font,
+   no network dependency). Tints keep each condition distinguishable at a glance. */
 const WEATHER_ICONS = {
-  storm: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <ellipse cx="24" cy="20" rx="12" ry="9" fill="#8a97a6"/>
-    <ellipse cx="18" cy="23" rx="8" ry="6" fill="#aab4c0"/>
-    <polygon points="22,28 18,36 23,33 19,42 28,31 23,34" fill="#fbbf24"/>
-  </svg>`,
-  clear: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <circle cx="24" cy="24" r="9" fill="#fbbf24"/>
-    <g stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round">
-      <line x1="24" y1="6" x2="24" y2="11"/>
-      <line x1="24" y1="37" x2="24" y2="42"/>
-      <line x1="6" y1="24" x2="11" y2="24"/>
-      <line x1="37" y1="24" x2="42" y2="24"/>
-      <line x1="11.5" y1="11.5" x2="15" y2="15"/>
-      <line x1="33" y1="33" x2="36.5" y2="36.5"/>
-      <line x1="36.5" y1="11.5" x2="33" y2="15"/>
-      <line x1="15" y1="33" x2="11.5" y2="36.5"/>
-    </g>
-  </svg>`,
-  rain: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <ellipse cx="24" cy="18" rx="13" ry="9" fill="#8a97a6"/>
-    <ellipse cx="17" cy="21" rx="8" ry="6" fill="#aab4c0"/>
-    <g stroke="#4aa3ff" stroke-width="2" stroke-linecap="round">
-      <line x1="17" y1="30" x2="15" y2="38"/>
-      <line x1="24" y1="30" x2="22" y2="38"/>
-      <line x1="31" y1="30" x2="29" y2="38"/>
-    </g>
-  </svg>`,
-  cloudy: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <ellipse cx="24" cy="22" rx="13" ry="9" fill="#8a97a6"/>
-    <ellipse cx="16" cy="25" rx="8" ry="6" fill="#aab4c0"/>
-    <ellipse cx="32" cy="26" rx="7" ry="5" fill="#aab4c0"/>
-  </svg>`,
-  snow: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <ellipse cx="24" cy="18" rx="13" ry="9" fill="#aab4c0"/>
-    <g stroke="#9ad8ff" stroke-width="2" stroke-linecap="round">
-      <line x1="16" y1="30" x2="16" y2="38"/>
-      <line x1="12" y1="34" x2="20" y2="34"/>
-      <line x1="24" y1="30" x2="24" y2="38"/>
-      <line x1="20" y1="34" x2="28" y2="34"/>
-      <line x1="32" y1="30" x2="32" y2="38"/>
-      <line x1="28" y1="34" x2="36" y2="34"/>
-    </g>
-  </svg>`,
-  wind: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <g stroke="#aab4c0" stroke-width="2.5" stroke-linecap="round">
-      <path d="M8 18 Q28 14 36 18 Q42 21 38 24 Q34 27 30 22" fill="none"/>
-      <path d="M8 24 Q24 21 32 24" fill="none"/>
-      <path d="M8 30 Q20 27 28 30 Q34 33 30 36 Q27 38 24 34" fill="none"/>
-    </g>
-  </svg>`,
-  unknown: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <circle cx="24" cy="24" r="16" stroke="#8a97a6" stroke-width="2"/>
-    <text x="24" y="30" text-anchor="middle" font-size="18" fill="#aab4c0">?</text>
-  </svg>`,
+  storm:   { name: 'cloud-lightning', color: '#ffd97a' },
+  clear:   { name: 'sun',             color: '#ffcf5c' },
+  rain:    { name: 'cloud-rain',      color: '#6fb3ff' },
+  cloudy:  { name: 'cloud',           color: '#aab4c0' },
+  snow:    { name: 'cloud-snow',      color: '#bfe3ff' },
+  wind:    { name: 'wind',            color: '#aab4c0' },
+  unknown: { name: 'question',        color: '#8a97a6' },
 };
 
 /* SPC category label map */
@@ -224,6 +179,22 @@ function val(v, suffix = '') {
   return esc(String(v)) + (suffix ? esc(suffix) : '');
 }
 
+/**
+ * Phosphor icon element (vendored font — see frontend/vendor/phosphor/).
+ * name:   Phosphor glyph name without the "ph-" prefix (e.g. "warning").
+ * weight: '' regular | 'fill' | 'bold'.
+ * cls:    extra class(es) for sizing/positioning.
+ * color:  optional inline color.
+ * Returns an inline <i> HTML string; always aria-hidden (icons are decorative,
+ * paired with text labels everywhere per PRD NFR-7).
+ */
+function ph(name, { weight = '', cls = '', color = '' } = {}) {
+  const base = weight === 'fill' ? 'ph-fill' : weight === 'bold' ? 'ph-bold' : 'ph';
+  const classes = `${base} ph-${name}${cls ? ' ' + cls : ''}`;
+  const style = color ? ` style="color:${color}"` : '';
+  return `<i class="${classes}" aria-hidden="true"${style}></i>`;
+}
+
 /* All time display is locked to Eastern time (America/New_York) so the board
    shows the correct local time regardless of the server/OS timezone. Intl
    handles EDT/EST transitions automatically. */
@@ -298,7 +269,7 @@ function sevChip(severity, extraText = '') {
   const m = SEV_META[severity] || SEV_META.info;
   const extra = extraText ? ` ${esc(extraText)}` : '';
   return `<span class="severity-chip ${m.cls}" aria-label="${m.label}${extraText ? ': ' + extraText : ''}">
-    <i class="chip-icon" aria-hidden="true">${m.icon}</i>${m.label}${extra}
+    ${ph(m.icon, { weight: 'fill', cls: 'chip-icon' })}${m.label}${extra}
   </span>`;
 }
 
@@ -307,7 +278,7 @@ function degradedBanner(src) {
   const timeStr = src.last_good_at ? `${fmtTime(src.last_good_at)}` : '&mdash;';
   const ageStr  = humanAge(src);
   return `<div class="degraded-banner" role="alert" aria-live="polite">
-    <i class="dg-icon" aria-hidden="true">&#9888;</i>
+    ${ph('warning', { weight: 'fill', cls: 'dg-icon' })}
     <div class="dg-text">
       Data as of ${timeStr} (${ageStr}) &mdash; source is down or stale.
       <span class="dg-note">Verify current conditions before you rely on this data.</span>
@@ -321,9 +292,10 @@ function isDegraded(src) {
   return src.stale === true || src.ok === false;
 }
 
-/** Card title bar */
-function cardTitle(text) {
-  return `<div class="card-head"><h2 class="card-title">${esc(text)}</h2></div>`;
+/** Card title bar, with an optional leading Phosphor icon. */
+function cardTitle(text, iconName) {
+  const icon = iconName ? ph(iconName, { cls: 'card-title-icon' }) : '';
+  return `<div class="card-head"><h2 class="card-title">${icon}<span>${esc(text)}</span></h2></div>`;
 }
 
 /** Card footer (source attribution) */
@@ -351,7 +323,7 @@ function weatherIconKey(iconStr) {
 function renderHeader(state) {
   const loc  = (state.location || {}).name || 'Field Location';
   const mode = (state.display  || {}).mode || 'morning';
-  $loc.textContent = loc;
+  $loc.innerHTML = `${ph('map-pin', { weight: 'fill', cls: 'loc-icon' })}${esc(loc)}`;
   $modeBadge.className = `header-mode-badge ${mode}`;
   $modeBadge.textContent = mode === 'afternoon' ? 'Afternoon' : 'Morning';
   $app.classList.toggle('mode-morning', mode !== 'afternoon');
@@ -391,7 +363,7 @@ function renderOverallRisk(state) {
   const r = RISK_FROM_SEVERITY[sev] || RISK_FROM_SEVERITY.info;
   const m = SEV_META[sev] || SEV_META.info;
   $risk.className = `risk-badge ${r.cls}`;
-  $risk.innerHTML = `<i aria-hidden="true">${m.icon}</i>${r.label}`;
+  $risk.innerHTML = `${ph(m.icon, { weight: 'fill' })}${r.label}`;
 }
 
 function renderNextUpdate(state) {
@@ -413,7 +385,7 @@ function renderSummary(state) {
   const updated = b.generated_at ? fmtTime(b.generated_at) : '&mdash;';
 
   $summary.innerHTML = `
-    ${cardTitle('Briefing')}
+    ${cardTitle('Briefing', 'clipboard-text')}
     <div class="card-body">
       ${bottom}
       <div class="briefing-label">Watch for</div>
@@ -437,7 +409,7 @@ function renderHazards(state) {
       return `<div class="hazard-flag ${m.cls}" role="listitem"
                    aria-label="Hazard rank ${f.rank}: ${esc(f.label)}, severity ${f.severity}">
         <span class="flag-rank" aria-hidden="true">${f.rank}</span>
-        <i aria-hidden="true">${m.icon}</i>
+        ${ph(m.icon, { weight: 'fill', cls: 'flag-icon' })}
         <span class="flag-text">${esc(f.label)}</span>
         <span class="flag-sev">${m.label}</span>
       </div>`;
@@ -447,12 +419,12 @@ function renderHazards(state) {
 
   const aqiHtml = aqi
     ? `<div class="aqi-callout" role="note" aria-label="Air quality: ${esc(aqi.label)}, AQI ${aqi.aqi}">
-        <i aria-hidden="true">&#9680;</i><strong>AQI ${val(aqi.aqi)}</strong> &mdash; ${esc(aqi.label)} &mdash; ${esc(aqi.category)}
+        ${ph('wind', { cls: 'aqi-icon' })}<strong>AQI ${val(aqi.aqi)}</strong> &mdash; ${esc(aqi.label)} &mdash; ${esc(aqi.category)}
       </div>` : '';
   const deg = isDegraded(src) ? degradedBanner(src) : '';
 
   $hazards.innerHTML = `
-    ${cardTitle('Hazards')}
+    ${cardTitle('Hazards', 'warning')}
     <div class="card-body">${deg}${flags}${aqiHtml}</div>
     ${cardFooter(src)}`;
 }
@@ -462,7 +434,7 @@ function eventItem(ev, sev) {
   if (sev) {
     const m = SEV_META[sev] || SEV_META.info;
     return `<li class="event-item alert-${sev}" role="listitem" aria-label="${m.label}: ${esc(ev.text)}">
-      <span class="event-icon" aria-hidden="true">${m.icon}</span>
+      ${ph(m.icon, { weight: 'fill', cls: 'event-icon' })}
       <span class="event-text">${esc(ev.text)}</span>
       <span class="event-type-badge">${m.label}</span></li>`;
   }
@@ -470,7 +442,7 @@ function eventItem(ev, sev) {
   const icon = EVENT_ICONS[type] || EVENT_ICONS.default;
   const badge = type !== 'default' ? `<span class="event-type-badge">${esc(type.toUpperCase())}</span>` : '';
   return `<li class="event-item ${esc(type)}" role="listitem">
-    <span class="event-icon" aria-hidden="true">${icon}</span>
+    ${ph(icon, { cls: 'event-icon' })}
     <span class="event-text">${esc(ev.text)}</span>${badge}</li>`;
 }
 
@@ -494,7 +466,7 @@ function renderActivity(state) {
     const list = traffic.length
       ? `<ul class="event-list">${traffic.map(ev => eventItem(ev)).join('')}</ul>`
       : `<div class="no-data-placeholder">No reported traffic events.</div>`;
-    $activity.innerHTML = `${cardTitle('PM Commute')}<div class="card-body">${deg}${now}${list}</div>${cardFooter(src)}`;
+    $activity.innerHTML = `${cardTitle('PM Commute', 'car-profile')}<div class="card-body">${deg}${now}${list}</div>${cardFooter(src)}`;
     return;
   }
 
@@ -509,7 +481,7 @@ function renderActivity(state) {
   const aList = alerts.length
     ? `<ul class="event-list">${alerts.map(a => eventItem(a, alertSeverityFromProps(a))).join('')}</ul>`
     : `<div class="no-data-placeholder">No active NWS alerts.</div>`;
-  $activity.innerHTML = `${cardTitle('Disruptions & Alerts')}
+  $activity.innerHTML = `${cardTitle('Disruptions & Alerts', 'traffic-sign')}
     <div class="card-body">${deg}
       <div class="sub-label">Traffic (511GA)</div>${tList}
       <div class="sub-label">Alerts (NWS)</div>${aList}
@@ -541,7 +513,7 @@ function renderTempChart(state) {
   const heat  = hours.map(h => h.feels_like_f).filter(v => v != null);
 
   if (temps.length < 2) {
-    $chartTemp.innerHTML = `${cardTitle('Temperature & Feels-Like')}<div class="card-body"><div class="no-data-placeholder">&mdash;</div></div>`;
+    $chartTemp.innerHTML = `${cardTitle('Temperature & Feels-Like', 'thermometer-simple')}<div class="card-body"><div class="no-data-placeholder">&mdash;</div></div>`;
     return;
   }
   const W = 320, H = 120, PAD = 18;
@@ -573,7 +545,7 @@ function renderTempChart(state) {
   }).join('');
 
   $chartTemp.innerHTML = `
-    ${cardTitle('Temperature & Feels-Like')}
+    ${cardTitle('Temperature & Feels-Like', 'thermometer-simple')}
     <div class="card-body chart-body">
       <div class="chart-with-axis">
         <div class="chart-y-axis">${axisLabels}</div>
@@ -603,10 +575,10 @@ function renderForecastMini(state) {
     cards = `<div class="no-data-placeholder">Forecast unavailable.</div>`;
   } else {
     cards = `<div class="forecast-days">` + days.map(d => {
-      const icon = WEATHER_ICONS[weatherIconKey(d.icon)] || WEATHER_ICONS.unknown;
+      const wx = WEATHER_ICONS[weatherIconKey(d.icon)] || WEATHER_ICONS.unknown;
       return `<div class="forecast-day-card" aria-label="${esc(d.name)}: high ${val(d.high_f, '°')}, low ${val(d.low_f, '°')}">
         <div class="forecast-day-name">${esc(d.name)}</div>
-        <div class="forecast-day-icon" aria-hidden="true">${icon}</div>
+        <div class="forecast-day-icon" aria-hidden="true">${ph(wx.name, { color: wx.color })}</div>
         <div class="forecast-temps">${val(d.high_f, '°')}/<span class="low">${val(d.low_f, '°')}</span></div>
         <div class="forecast-day-summary">${esc(d.summary || '')}</div>
       </div>`;
@@ -621,7 +593,7 @@ function renderForecastMini(state) {
   }
 
   $forecast.innerHTML = `
-    ${cardTitle('3-Day Look Ahead')}
+    ${cardTitle('3-Day Look Ahead', 'calendar-dots')}
     <div class="card-body">${deg}${cards}${spcHtml}</div>
     ${cardFooter(src)}`;
 }
@@ -646,17 +618,17 @@ function renderStatusStrip(state) {
     : (tod.low_f != null ? `Lo ${Math.round(tod.low_f)}°` : '');
 
   const items = [];
-  items.push(stripItem('🌡', 'Temp',
+  items.push(stripItem('thermometer-simple', 'Temp',
     cur.temp_f != null ? `${Math.round(cur.temp_f)}°` : '—',
-    cur.feels_like_f != null ? `feels ${Math.round(cur.feels_like_f)}°` : ''));
-  items.push(stripItem('⤒', 'Forecast', todayVal, todaySub));
-  items.push(stripItem('☂', 'Precip Chance', tod.pop_pct != null ? `${tod.pop_pct}%` : '—',
-    tod.pop_window ? esc(tod.pop_window) : ''));
-  items.push(stripItem('●', 'Air Quality', aqi ? aqi.label : 'No data',
-    aqi ? `AQI ${aqi.aqi}` : ''));
-  items.push(stripItem('✷', 'UV Index', tod.uv_index != null ? String(tod.uv_index) : '—'));
-  items.push(stripItem('☀', 'Sunrise', hhmm(tod.sunrise) || '—'));
-  items.push(stripItem('☾', 'Sunset', hhmm(tod.sunset) || '—'));
+    cur.feels_like_f != null ? `feels ${Math.round(cur.feels_like_f)}°` : '', '#ff8a5c'));
+  items.push(stripItem('thermometer-hot', 'Forecast', todayVal, todaySub, '#ffb84d'));
+  items.push(stripItem('umbrella', 'Precip Chance', tod.pop_pct != null ? `${tod.pop_pct}%` : '—',
+    tod.pop_window ? esc(tod.pop_window) : '', '#6fb3ff'));
+  items.push(stripItem('wind', 'Air Quality', aqi ? aqi.label : 'No data',
+    aqi ? `AQI ${aqi.aqi}` : '', '#8ec6ff'));
+  items.push(stripItem('sun', 'UV Index', tod.uv_index != null ? String(tod.uv_index) : '—', '', '#ffcf5c'));
+  items.push(stripItem('sun-horizon', 'Sunrise', hhmm(tod.sunrise) || '—', '', '#ffcf5c'));
+  items.push(stripItem('moon', 'Sunset', hhmm(tod.sunset) || '—', '', '#9fb2ff'));
 
   // All-systems aggregate across every live source.
   const blocks = ['nws', 'spc', 'ga511', 'airnow', 'openmeteo', 'weather_map']
@@ -664,16 +636,16 @@ function renderStatusStrip(state) {
   const down = blocks.filter(b => !b.ok || b.stale).map(b => b.name);
   const allGo = down.length === 0;
   const sysHtml = allGo
-    ? `<div class="strip-item strip-status ok"><i aria-hidden="true">✓</i><div class="strip-text"><span class="strip-value">All Systems Go</span></div></div>`
-    : `<div class="strip-item strip-status down" role="alert"><i aria-hidden="true">⚠</i><div class="strip-text"><span class="strip-label">Degraded</span><span class="strip-value">${esc(down.join(', '))}</span></div></div>`;
+    ? `<div class="strip-item strip-status ok">${ph('check-circle', { weight: 'fill' })}<div class="strip-text"><span class="strip-value">All Systems Go</span></div></div>`
+    : `<div class="strip-item strip-status down" role="alert">${ph('warning', { weight: 'fill' })}<div class="strip-text"><span class="strip-label">Degraded</span><span class="strip-value">${esc(down.join(', '))}</span></div></div>`;
 
   $strip.innerHTML = items.join('') + sysHtml;
 }
 
-function stripItem(icon, label, value, sub = '') {
+function stripItem(iconName, label, value, sub = '', color = '') {
   const subHtml = sub ? `<span class="strip-sub">${esc(sub)}</span>` : '';
   return `<div class="strip-item">
-    <i class="strip-icon" aria-hidden="true">${icon}</i>
+    ${ph(iconName, { cls: 'strip-icon', color })}
     <div class="strip-text"><span class="strip-label">${esc(label)}</span><span class="strip-value">${esc(value)}</span>${subHtml}</div>
   </div>`;
 }
@@ -977,7 +949,7 @@ function initMap(state) {
       const props = (e.features[0] || {}).properties || {};
       const m = SEV_META[props._sev] || SEV_META.info;
       alertPopup.setLngLat(e.lngLat)
-        .setHTML(`${m.icon} ${esc(props.event || 'Alert')}`)
+        .setHTML(`${ph(m.icon, { weight: 'fill' })} ${esc(props.event || 'Alert')}`)
         .addTo(map);
     });
     map.on('mouseleave', 'alert-fill', () => {
@@ -1143,7 +1115,7 @@ function updateMapChrome(mode) {
     leg.innerHTML = Object.entries(TRAFFIC_PIN_META)
       .filter(([k]) => k !== 'other')
       .map(([, m]) =>
-        `<span class="legend-swatch"><i style="background:${m.color}"></i>${m.icon} ${m.label}</span>`)
+        `<span class="legend-swatch">${ph(m.icon, { weight: 'fill', color: m.color })} ${esc(m.label)}</span>`)
       .join('');
     leg.classList.remove('hidden');
   } else {
@@ -1184,7 +1156,7 @@ function updateTrafficLayer(state) {
       el.setAttribute('aria-label', ev.text || '');
       el.innerHTML =
         `<div class="traffic-pin__inner">` +
-          `<span class="traffic-pin__badge" style="background:${meta.color};--pin-color:${meta.color};">${meta.icon}</span>` +
+          `<span class="traffic-pin__badge" style="background:${meta.color};--pin-color:${meta.color};">${ph(meta.icon, { weight: 'fill' })}</span>` +
           (label ? `<span class="traffic-pin__label">${esc(label)}</span>` : '') +
         `</div>`;
       trafficMarkers.push(
@@ -1233,7 +1205,7 @@ function renderMap(state) {
   const src = cfg.source || (state.sources || {}).weather_map || {};
   if (isDegraded(src)) {
     $mapDegraded.classList.remove('hidden');
-    $mapDegraded.innerHTML = `<i aria-hidden="true">&#9888;</i> Radar as of ${lastGoodTime(src)} (${humanAge(src)}) &mdash; verify current conditions.`;
+    $mapDegraded.innerHTML = `${ph('warning', { weight: 'fill' })} Radar as of ${lastGoodTime(src)} (${humanAge(src)}) &mdash; verify current conditions.`;
   } else {
     $mapDegraded.classList.add('hidden');
   }
