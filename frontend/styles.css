@@ -196,6 +196,14 @@ html, body {
 /* Left column has just Hazards + Briefing now — let them grow to fill the
    space the relocated Disruptions card left behind (Hazards is the focus). */
 .dash-col-left .card { flex: 1 1 auto; }
+/* Right column: temp chart pins to the top; the 3-day look-ahead and the
+   Safety Tips card pin to the bottom (safety snapped to the very bottom, 3-day
+   clamped directly above it). The middle card — Disruptions/Alerts in the
+   morning, Hazards in the afternoon — expands and contracts to take up the
+   slack between them. */
+.dash-col-right > .card { flex: 0 0 auto; }
+.dash-col-right > #card-activity,
+.dash-col-right > #card-hazards { flex: 1 1 auto; min-height: 0; }
 .card-head {
   flex-shrink: 0;
   padding: 0.5rem 1rem;

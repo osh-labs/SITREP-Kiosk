@@ -146,9 +146,10 @@ traffic:
 #   lightning → shown only when thunderstorms/severe are flagged or in the forecast
 safety_tips:
   enabled: true
-  file: "config/safety_tips.yaml"   # authored list; example file is the fallback
-  rotation_seconds: 15              # how long each tip shows before revolving (frontend)
-  max_pool: 30                      # cap on eligible tips sent to the frontend
+  file: "config/safety_tips.yaml"   # committed authored list; example file is the fallback
+  rotation_seconds: 30              # how long each tip shows before revolving (frontend)
+  max_pool: 150                     # cap on eligible tips (guards payload; set above the
+                                    # authored total so every eligible tip gets screen time)
   conditions:
     heat:  { high_f_at_or_above: 85 }   # "hot day" gate for heat-tagged tips
     cold:  { low_f_at_or_below: 40 }    # "cold day" gate for cold-tagged tips

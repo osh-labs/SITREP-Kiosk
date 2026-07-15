@@ -1,8 +1,8 @@
 # Field SITREP Board — Safety Tips (example / fallback content)
 #
-# This is the COMMITTED FALLBACK. Author the real, reviewed list at
-# config/safety_tips.yaml (gitignored) and it takes precedence — the backend
-# prefers safety_tips.yaml and only falls back to this file.
+# This is the COMMITTED FALLBACK / schema reference. The real, reviewed list
+# lives at config/safety_tips.yaml and takes precedence — the backend prefers
+# safety_tips.yaml and only falls back to this file if it's missing.
 #
 # Schema per tip:
 #   id:        stable, unique, lowercase-hyphenated (e.g. heat-01)

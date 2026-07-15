@@ -151,8 +151,8 @@ _DEFAULTS: dict[str, Any] = {
     "safety_tips": {
         "enabled": True,
         "file": "config/safety_tips.yaml",
-        "rotation_seconds": 15,
-        "max_pool": 30,
+        "rotation_seconds": 30,
+        "max_pool": 150,
         "conditions": {
             "heat": {"high_f_at_or_above": 85},
             "cold": {"low_f_at_or_below": 40},

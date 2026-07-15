@@ -258,7 +258,7 @@
   },
   "safety_tips": {
     "enabled": true,
-    "rotation_seconds": 15,
+    "rotation_seconds": 30,
     "tips": [
       {
         "id": "general-01",

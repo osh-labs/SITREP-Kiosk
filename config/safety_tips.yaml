@@ -1,0 +1,456 @@
+metadata:
+  board: Field SITREP Board
+  card: Safety Tips
+  version: 1.0
+  last_updated: 2026-07-15
+  total_tips: 100
+  notes: >
+    Tips are grouped by primary category and carry a tags list for dashboard
+    filtering. Categories heat, cold, and lightning are split out from the
+    board's computed weather categories per stakeholder request so the
+    dashboard can select or suppress them independently. Lightning tips
+    additionally carry rig-ops and schedule-dependent tags since that hazard
+    applies specifically to drill rig operations and is only relevant when
+    rig work is scheduled.
+
+categories:
+  - heat
+  - cold
+  - lightning
+  - driving
+  - ppe
+  - trench
+  - utility
+  - wildlife
+  - equipment
+  - stf
+  - lab
+  - office
+  - communication
+
+tips:
+  # ---------------- HEAT ----------------
+  - id: heat-01
+    category: heat
+    tags: [heat]
+    text: "No shade at your site today? Plan breaks early. Heat builds up over hours, so waiting until you feel it means you're already behind."
+  - id: heat-02
+    category: heat
+    tags: [heat]
+    text: "Electrolyte drinks and ice are stocked because sweating all day drains more than water. Salts and minerals need replacing too, before symptoms start."
+  - id: heat-03
+    category: heat
+    tags: [heat]
+    text: "Heat illness starts quiet: headache, cramping, feeling irritable or foggy. These are early warning signs, not something to push through. Speak up."
+  - id: heat-04
+    category: heat
+    tags: [heat]
+    text: "Concrete and asphalt absorb heat and radiate it back at you all day. The air temp on your phone won't tell you what the ground is doing."
+  - id: heat-05
+    category: heat
+    tags: [heat]
+    text: "If a coworker seems off in the heat, confused, stumbling, not sweating when they should be, check on them. Heat stroke can escalate fast."
+  - id: heat-06
+    category: heat
+    tags: [heat]
+    text: "Drink water before your shift starts. Thirst is a lagging signal. By the time you feel it, your body's already running low."
+  - id: heat-07
+    category: heat
+    tags: [heat]
+    text: "Heat wears on judgment before it wears on your body. Watch for shortcuts and mistakes creeping in, both yours and your coworkers'."
+  - id: heat-08
+    category: heat
+    tags: [heat]
+    text: "A hat with a brim does more for you than you'd think, keeping direct sun off your face and neck through a long day outside."
+  - id: heat-09
+    category: heat
+    tags: [heat]
+    text: "Dark-colored gear absorbs more heat than light-colored gear. If you have a choice on a scorching day, lighter is cooler."
+  - id: heat-10
+    category: heat
+    tags: [heat]
+    text: "Heat exhaustion and heat stroke aren't the same thing. Heavy sweating and weakness is exhaustion. Confusion and hot, dry skin is a medical emergency."
+  - id: heat-11
+    category: heat
+    tags: [heat]
+    text: "Sitting in the truck with the AC running for a few minutes counts as a real break. Don't skip it just because you're mid-task."
+
+  # ---------------- COLD ----------------
+  - id: cold-01
+    category: cold
+    tags: [cold]
+    text: "Georgia roads ice fast because they're not built or treated for it like northern states. Bridges, overpasses, and shaded curves freeze first and stay frozen longest."
+  - id: cold-02
+    category: cold
+    tags: [cold]
+    text: "Layer up for the site itself, not just the truck ride. Field work means standing outside for stretches, and layers let you adjust as conditions change."
+  - id: cold-03
+    category: cold
+    tags: [cold]
+    text: "Give cold hands a minute to warm up before precision work. Reduced dexterity leads to fumbled tools and slower reactions."
+  - id: cold-04
+    category: cold
+    tags: [cold]
+    text: "Winter daylight is short, often gone by 5:30. Plan your drive home before dark catches you on roads you don't know well."
+  - id: cold-05
+    category: cold
+    tags: [cold]
+    text: "Cold weather can mask fatigue since shivering and low energy feel similar. If you're dragging, don't assume it's just the temperature."
+  - id: cold-06
+    category: cold
+    tags: [cold]
+    text: "Wet, cold, and wind together pull heat from your body far faster than any one alone. Dress for the combination, not just the thermometer reading."
+  - id: cold-07
+    category: cold
+    tags: [cold]
+    text: "Frozen ground can hide uneven footing under a smooth-looking crust. Test your steps on frost-covered or icy areas rather than trusting the surface."
+  - id: cold-08
+    category: cold
+    tags: [cold]
+    text: "A frozen door handle or lock isn't just an annoyance. Rushing to force it open is a common way to hurt a hand on a cold morning."
+  - id: cold-09
+    category: cold
+    tags: [cold]
+    text: "Warm up the truck and clear the windshield fully before you drive, not just a peephole. Full visibility matters more on unfamiliar winter roads."
+  - id: cold-10
+    category: cold
+    tags: [cold, night-work]
+    text: "Night work in winter combines two hazards at once: low visibility and cold. Slow down and give yourself extra margin on both counts."
+
+  # ---------------- LIGHTNING ----------------
+  - id: lightning-01
+    category: lightning
+    tags: [lightning, rig-ops, schedule-dependent]
+    text: "Drill rigs are often the tallest metal object around, which makes them a lightning target. At the first sign of a storm, shut down and get to a hard-top vehicle."
+  - id: lightning-02
+    category: lightning
+    tags: [lightning, rig-ops, schedule-dependent]
+    text: "Use the 30-30 rule: if the gap between the lightning flash and the thunder is 30 seconds or less, the storm is close enough to shut down for. Wait 30 minutes after the last thunder before resuming."
+  - id: lightning-03
+    category: lightning
+    tags: [lightning, rig-ops, schedule-dependent]
+    text: "If you can hear thunder, you're already within striking range. No need to wait until the storm looks like it's overhead."
+  - id: lightning-04
+    category: lightning
+    tags: [lightning, rig-ops, schedule-dependent]
+    text: "A clear sky above you doesn't mean you're safe. Lightning can strike miles ahead of the storm it came from."
+  - id: lightning-05
+    category: lightning
+    tags: [lightning, rig-ops, schedule-dependent]
+    text: "Once you're sheltered, stay there for the full 30 minutes. Additional storm cells often follow the first one through the area."
+
+  # ---------------- DRIVING ----------------
+  - id: driving-01
+    category: driving
+    tags: [driving]
+    text: "Heading somewhere new? Check the route and expected workzone conditions ahead of time. Sorting it out live, while driving, is when mistakes happen."
+  - id: driving-02
+    category: driving
+    tags: [driving]
+    text: "Parking near an active workzone means you're parking in traffic, not just near it. Take the extra few seconds to choose your spot deliberately."
+  - id: driving-03
+    category: driving
+    tags: [driving]
+    text: "Even a workzone someone else set up deserves your own quick check before you get out. Cones and signage don't always match the actual conditions."
+  - id: driving-04
+    category: driving
+    tags: [driving]
+    text: "Loading and unloading roadside puts your back to passing traffic. Face outward, move with purpose, and don't linger at the tailgate longer than needed."
+  - id: driving-05
+    category: driving
+    tags: [driving, fatigue]
+    text: "A long drive after a full field day is its own hazard. Fatigue slows reaction time as much as some impairments do. Pull over before it forces the issue."
+  - id: driving-06
+    category: driving
+    tags: [driving]
+    text: "The rearview camera helps you see, but it's a narrow view. A quick walk-around before backing near people or equipment catches what the camera misses."
+  - id: driving-07
+    category: driving
+    tags: [driving]
+    text: "Multiple sites in one day means multiple chances to get comfortable. Treat every stop, even the fifth one, with the same care as the first."
+  - id: driving-08
+    category: driving
+    tags: [driving]
+    text: "New road, GPS running, and a deadline looming is a common recipe for a wrong turn or a missed hazard. Pull over to sort out the route rather than reroute while moving."
+  - id: driving-09
+    category: driving
+    tags: [driving]
+    text: "Merging back into traffic after a stop takes a clear gap, not a hopeful one. Wait for the gap that's actually there."
+  - id: driving-10
+    category: driving
+    tags: [driving]
+    text: "A truck idling on the shoulder still needs hazard lights on, even for a quick stop. Give other drivers every second of warning you can."
+  - id: driving-11
+    category: driving
+    tags: [driving]
+    text: "Exit ramps and shoulders near active work areas see more distracted driving than usual. Extra caution there is worth it."
+  - id: driving-12
+    category: driving
+    tags: [driving]
+    text: "Set your GPS and adjust mirrors before you're moving. Sorting that out at speed takes your eyes off the road exactly when you need them most."
+
+  # ---------------- PPE ----------------
+  - id: ppe-01
+    category: ppe
+    tags: [ppe]
+    text: "A dirty or faded hi-vis vest loses its reflectivity and contrast, which is the whole point of wearing it. If it doesn't stand out anymore, swap it."
+  - id: ppe-02
+    category: ppe
+    tags: [ppe, hearing]
+    text: "Keep hearing protection on you at all times on site, even when you're not wearing it. If you find yourself raising your voice to talk, that's your cue to put it on."
+  - id: ppe-03
+    category: ppe
+    tags: [ppe, hearing]
+    text: "UC's action level is 85 decibels. A practical rule of thumb: if you have to raise your voice to be heard a few feet away, you're likely at or above it."
+  - id: ppe-04
+    category: ppe
+    tags: [ppe]
+    text: "You can pull your hard hat off in the truck. Outside the truck, it stays on, since overhead hazards don't pause for paperwork."
+  - id: ppe-05
+    category: ppe
+    tags: [ppe]
+    text: "Gloves during sample handling protect your skin from what's in the sample and protect the sample from contamination. It works both ways."
+  - id: ppe-06
+    category: ppe
+    tags: [ppe]
+    text: "Steel or composite toe boots belong on every site, even the ones that seem low-risk. Dropped tools and equipment don't check the site type first."
+  - id: ppe-07
+    category: ppe
+    tags: [ppe]
+    text: "PPE sitting in the truck isn't protecting anyone. Grab it before you start walking the site, not after you notice a hazard."
+  - id: ppe-08
+    category: ppe
+    tags: [ppe]
+    text: "Safety glasses matter even on tasks that don't look dusty. Wind-blown debris and kickback from tools don't give much warning."
+  - id: ppe-09
+    category: ppe
+    tags: [ppe]
+    text: "A hard hat with a cracked shell or worn suspension isn't offering the protection it looks like it is. Check yours occasionally, not just when it fails."
+  - id: ppe-10
+    category: ppe
+    tags: [ppe, heat]
+    text: "Sunscreen counts as PPE on long outdoor days. Sunburn adds up over a career, even if it doesn't feel urgent today."
+  - id: ppe-11
+    category: ppe
+    tags: [ppe]
+    text: "PPE fitted properly works better than PPE just worn. A vest that's too loose or a hard hat that shifts around isn't doing its full job."
+
+  # ---------------- TRENCH ----------------
+  - id: trench-01
+    category: trench
+    tags: [trench]
+    text: "Recognizing a bad trench is most of the job here. If it isn't properly shored and you aren't trained to enter it, stay out, no exceptions."
+  - id: trench-02
+    category: trench
+    tags: [trench]
+    text: "A spoil pile placed too close to the edge adds weight right where the soil is weakest, raising cave-in risk."
+  - id: trench-03
+    category: trench
+    tags: [trench]
+    text: "Watching from the edge still puts you inside the collapse zone if the walls give way. Know the actual safe standoff distance, not just \"a few feet back.\""
+  - id: trench-04
+    category: trench
+    tags: [trench, stop-work]
+    text: "If a trench doesn't look right to you, trust that instinct and speak up. Stopping work to double check is always the right call, every time."
+  - id: trench-05
+    category: trench
+    tags: [trench]
+    text: "A crew working under time pressure doesn't change the physics of an unshored trench. The standard holds regardless of schedule."
+  - id: trench-06
+    category: trench
+    tags: [trench]
+    text: "Soil type changes how a trench behaves. Sandy or previously disturbed soil can fail with less warning than you'd expect from looking at it."
+  - id: trench-07
+    category: trench
+    tags: [trench]
+    text: "Water pooling at the bottom of a trench or seeping from the walls is a sign conditions are changing. Treat it as a reason to reassess, not ignore."
+  - id: trench-08
+    category: trench
+    tags: [trench]
+    text: "Vibration from nearby equipment or traffic can destabilize trench walls that looked fine an hour earlier. Stay aware of what's operating close by."
+
+  # ---------------- UTILITY ----------------
+  - id: utility-01
+    category: utility
+    tags: [utility]
+    text: "Call 811 before you dig. It's a free call that gets underground utilities marked so you're not the one who finds a gas line or live conductor the hard way."
+  - id: utility-02
+    category: utility
+    tags: [utility]
+    text: "Locate marks are a strong lead, not a guarantee. Depth, drift, and unmarked private lines can all throw off the marked location. Stay alert regardless."
+  - id: utility-03
+    category: utility
+    tags: [utility, rig-ops]
+    text: "Overhead lines near rig work deserve the same respect as what's buried underground. A mast or tool making contact with a live line can kill. Look up before you set up."
+  - id: utility-04
+    category: utility
+    tags: [utility]
+    text: "Private utility lines, like a homeowner's own gas or electric run, aren't always in the 811 locate. Ask about them directly when relevant."
+  - id: utility-05
+    category: utility
+    tags: [utility]
+    text: "If you hit or suspect you've hit a utility line, stop work immediately and report it, even if nothing obvious happened. Some damage shows up later."
+
+  # ---------------- WILDLIFE ----------------
+  - id: wildlife-01
+    category: wildlife
+    tags: [wildlife, seasonal]
+    text: "Snakes, fire ants, and ticks are active at undeveloped and vacant sites in the warmer months. Watch where you place your hands and knees, not just your feet."
+  - id: wildlife-02
+    category: wildlife
+    tags: [wildlife]
+    text: "Tall grass and brush piles are exactly where you don't want to reach blind. A quick look before you reach saves you from a surprise."
+  - id: wildlife-03
+    category: wildlife
+    tags: [wildlife]
+    text: "Fire ant mounds can look like a patch of loose dirt until you're standing in it. Scan the ground before setting up equipment or kneeling."
+  - id: wildlife-04
+    category: wildlife
+    tags: [wildlife]
+    text: "A snake encountered on site usually wants distance, not confrontation. Back away slowly and give it a clear path to leave."
+  - id: wildlife-05
+    category: wildlife
+    tags: [wildlife, seasonal]
+    text: "Tick checks after a day in overgrown areas take a minute and catch problems early. Worth building into your end-of-day routine."
+
+  # ---------------- EQUIPMENT ----------------
+  - id: equipment-01
+    category: equipment
+    tags: [equipment]
+    text: "Ring density drivers and penetrometers have real pinch points where moving parts meet. Know exactly where your hands are before you drive or extract."
+  - id: equipment-02
+    category: equipment
+    tags: [equipment, driving]
+    text: "Equipment left loose in a truck bed can shift or become airborne at highway speed. The extra minute to secure it is cheaper than the alternative."
+  - id: equipment-03
+    category: equipment
+    tags: [equipment]
+    text: "Power tools keep spinning or cutting for a moment after you release the trigger. Wait for the tool to fully stop before you set it down or reach near it."
+  - id: equipment-04
+    category: equipment
+    tags: [equipment, driving]
+    text: "A quick check that everything's locked down before you pull out saves you from a scattered truck bed, or worse, something falling out on the road."
+  - id: equipment-05
+    category: equipment
+    tags: [equipment]
+    text: "Sharp coring bits and blades deserve the same respect after use as during. Clean and store them the way you'd want to find them."
+  - id: equipment-06
+    category: equipment
+    tags: [equipment]
+    text: "Tools that feel a little off, sticking, grinding, loose, are worth flagging before they fail mid-task rather than after."
+  - id: equipment-07
+    category: equipment
+    tags: [equipment, stf]
+    text: "Extension cords and cables across a walkway are a trip hazard for you and everyone else on site. Route them out of the path when you can."
+
+  # ---------------- SLIPS / TRIPS / FALLS ----------------
+  - id: stf-01
+    category: stf
+    tags: [stf]
+    text: "Rebar, formwork, and staged materials aren't going to move out of your way. A quick scan of your path before you walk it beats reacting mid-step."
+  - id: stf-02
+    category: stf
+    tags: [stf]
+    text: "Uneven ground catches people looking at a phone or paperwork instead of their feet. Save the reading for when you're standing still."
+  - id: stf-03
+    category: stf
+    tags: [stf]
+    text: "Carrying equipment that blocks your view of the ground is a common setup for a fall. If you can't see your feet, make a second trip."
+  - id: stf-04
+    category: stf
+    tags: [stf]
+    text: "Freshly graded or recently disturbed soil looks solid but often isn't compacted yet. Test your footing before committing your full weight."
+  - id: stf-05
+    category: stf
+    tags: [stf]
+    text: "Wet or muddy boots on a ladder or truck step reduce your grip more than you'd expect. Scrape them off before you climb."
+  - id: stf-06
+    category: stf
+    tags: [stf, equipment]
+    text: "A stretched extension cord or hose across a walkway is easy to forget about until someone catches a foot on it. Keep an eye on your own layout."
+  - id: stf-07
+    category: stf
+    tags: [stf]
+    text: "Stepping over a hazard instead of walking around it is how a lot of falls happen. The extra few steps around are worth it."
+
+  # ---------------- LAB ----------------
+  - id: lab-01
+    category: lab
+    tags: [lab]
+    text: "Ovens run hot enough to burn on contact. Use the gloves provided and assume every surface near one is hotter than it looks."
+  - id: lab-02
+    category: lab
+    tags: [lab]
+    text: "Sieve shakers and crushing equipment have moving parts that don't stop the instant you let go. Keep hands clear until it's fully stopped."
+  - id: lab-03
+    category: lab
+    tags: [lab]
+    text: "Chemical reagents in the lab should stay labeled and stored the way they came. An unlabeled container is a hazard for the next person too."
+  - id: lab-04
+    category: lab
+    tags: [lab]
+    text: "Dust from crushed or sieved samples adds up over a shift. Use the ventilation and respiratory protection available for dusty tasks."
+  - id: lab-05
+    category: lab
+    tags: [lab, stf]
+    text: "A wet lab floor from sample prep is a slip hazard just like a wet site. Clean spills as you go rather than waiting for a break."
+  - id: lab-06
+    category: lab
+    tags: [lab, equipment]
+    text: "Calibration and maintenance on lab equipment isn't just about accurate results. Worn or damaged equipment can also become unsafe to operate."
+
+  # ---------------- OFFICE ----------------
+  - id: office-01
+    category: office
+    tags: [office]
+    text: "A desk set up at the wrong height adds strain that builds slowly over months. Small adjustments to your chair and monitor add up."
+  - id: office-02
+    category: office
+    tags: [office]
+    text: "Know where the fire extinguisher and nearest exit are in your building, not just in an emergency drill. Muscle memory helps when it counts."
+  - id: office-03
+    category: office
+    tags: [office]
+    text: "Stacked boxes or supplies blocking a hallway or exit are a hazard for everyone in the building, not just an inconvenience."
+  - id: office-04
+    category: office
+    tags: [office]
+    text: "Overloaded power strips and tangled cords under a desk are a common and avoidable fire risk. Worth a periodic check."
+  - id: office-05
+    category: office
+    tags: [office]
+    text: "Standing up and moving for a few minutes every hour helps more than it seems like it would, especially on long days at a desk."
+  - id: office-06
+    category: office
+    tags: [office]
+    text: "If you notice a safety issue in the office, a loose railing, a burnt-out exit light, report it the same way you'd flag a site hazard."
+
+  # ---------------- COMMUNICATION ----------------
+  - id: communication-01
+    category: communication
+    tags: [communication, lone-worker]
+    text: "Check-in habits differ by department, but the underlying idea is the same everywhere: someone should know roughly where you are and when to expect you back."
+  - id: communication-02
+    category: communication
+    tags: [communication]
+    text: "Confirm the site contact and address before you leave the office. It's exactly the information a responder would need if something went wrong on site."
+  - id: communication-03
+    category: communication
+    tags: [communication]
+    text: "If something feels off, or you need to report a concern, call Chris Lee, Safety, at 678-234-3460. That call is always welcome, not a bother."
+  - id: communication-04
+    category: communication
+    tags: [communication]
+    text: "Cell coverage isn't guaranteed at every site, especially in rural stretches. Have a plan for reaching someone if you lose signal."
+  - id: communication-05
+    category: communication
+    tags: [communication]
+    text: "General THAs are a starting point, not a substitute for your eyes. Walk your specific site and adjust for what you actually see before starting work."
+  - id: communication-06
+    category: communication
+    tags: [communication, lone-worker]
+    text: "Let your team know roughly when you expect to wrap up for the day, even informally. It's the fastest way for someone to notice if you're overdue."
+  - id: communication-07
+    category: communication
+    tags: [communication, lone-worker]
+    text: "A missed check-in call deserves a follow-up, not an assumption it was nothing. On solo assignments, that follow-up is what catches real problems."

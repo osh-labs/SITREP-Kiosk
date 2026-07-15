@@ -2,7 +2,6 @@
 __pycache__/
 *.pyc
 config/config.yaml
-config/safety_tips.yaml
 .venv/
 venv/
 node_modules/

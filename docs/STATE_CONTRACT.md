@@ -142,7 +142,7 @@ A `source` block:
 
   "safety_tips": {
     "enabled": true,
-    "rotation_seconds": 15,
+    "rotation_seconds": 30,
     "tips": [
       { "id": "heat-01", "text": "Drink water before you're thirsty. Thirst means you're already behind — sip on a schedule, not on demand.", "category": "heat", "tags": ["heat"] },
       { "id": "general-01", "text": "Tell someone your route and expected return before you head out.", "category": "communication", "tags": ["communication"] }
