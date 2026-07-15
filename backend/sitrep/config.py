@@ -145,6 +145,20 @@ _DEFAULTS: dict[str, Any] = {
         "rain",
         "wind",
     ],
+    # Revolving "Safety Tips" card. Content is authored offline (config/
+    # safety_tips.yaml, with safety_tips.example.yaml committed as the fallback);
+    # only the tags listed under `conditions` gate a tip on live weather.
+    "safety_tips": {
+        "enabled": True,
+        "file": "config/safety_tips.yaml",
+        "rotation_seconds": 15,
+        "max_pool": 30,
+        "conditions": {
+            "heat": {"high_f_at_or_above": 85},
+            "cold": {"low_f_at_or_below": 40},
+            "lightning": {},
+        },
+    },
     # 511GA traffic prioritization. Events are ranked deterministically so the
     # board leads with the worst disruptions and lets minor ones slide off.
     "traffic": {

@@ -404,6 +404,62 @@ class MapBlock:
         return d
 
 
+# ── Safety tips (revolving card; content authored offline, not model-generated) ──
+
+@dataclass
+class SafetyTip:
+    id: str
+    text: str
+    category: str = ""
+    tags: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "text": self.text,
+            "category": self.category,
+            "tags": self.tags,
+        }
+
+
+@dataclass
+class SafetyTipsBlock:
+    """Pool of currently-eligible safety tips + rotation cadence.
+
+    The backend gates tips on live weather (tags); the frontend shuffles this
+    pool and revolves through it every `rotation_seconds`. No source attribution
+    — the content is static, authored offline (never model-generated).
+    """
+    enabled: bool = True
+    rotation_seconds: int = 15
+    tips: list[SafetyTip] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "enabled": self.enabled,
+            "rotation_seconds": self.rotation_seconds,
+            "tips": [t.to_dict() for t in self.tips],
+        }
+
+    @staticmethod
+    def from_dict(data: Optional[dict]) -> "SafetyTipsBlock":
+        data = data or {}
+        tips = [
+            SafetyTip(
+                id=str(t.get("id", "")),
+                text=str(t.get("text", "")),
+                category=str(t.get("category", "") or ""),
+                tags=list(t.get("tags", []) or []),
+            )
+            for t in data.get("tips", []) or []
+        ]
+        return SafetyTipsBlock(
+            enabled=bool(data.get("enabled", True)),
+            rotation_seconds=int(data.get("rotation_seconds", 15)),
+            tips=tips,
+        )
+
+
 # ── Sources summary map ───────────────────────────────────────────────────────
 
 @dataclass
@@ -442,6 +498,7 @@ class ConsolidatedState:
     forecast_3day: Forecast3DayBlock = field(default_factory=Forecast3DayBlock)
     astro: AstroBlock = field(default_factory=AstroBlock)
     weather_map: MapBlock = field(default_factory=MapBlock)
+    safety_tips: SafetyTipsBlock = field(default_factory=SafetyTipsBlock)
     sources: SourcesMap = field(default_factory=SourcesMap)
 
     def to_dict(self) -> dict:
@@ -458,5 +515,6 @@ class ConsolidatedState:
             "forecast_3day": self.forecast_3day.to_dict(),
             "astro": self.astro.to_dict(),
             "weather_map": self.weather_map.to_dict(),
+            "safety_tips": self.safety_tips.to_dict(),
             "sources": self.sources.to_dict(),
         }

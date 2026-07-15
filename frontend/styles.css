@@ -413,6 +413,35 @@ html, body {
 .spc-moderate { background: var(--sev-danger-bg); border-color: var(--sev-danger-border); color: var(--sev-danger-text); }
 .spc-high     { background: var(--sev-extreme-bg);border-color: var(--sev-extreme-border);color: var(--sev-extreme-text); }
 
+/* ── Safety tips (revolving card) ───────────────────────────────────── */
+/* Fills the remaining space at the bottom of the right column. One tip at a
+   time, centered and sized for across-the-room legibility (PRD NFR-7). */
+#card-safety { border-top: 1px solid var(--brand-blue); }
+#card-safety .card-head { border-bottom-color: var(--accent); }
+#card-safety .card-title-icon { color: var(--accent); }
+.safety-body {
+  justify-content: center; align-items: center; text-align: center;
+  gap: 0.5rem;
+}
+.safety-icon {
+  font-style: normal; color: var(--accent);
+  font-size: 2rem; line-height: 1; flex-shrink: 0;
+}
+.safety-text {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-normal);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.safety-cat {
+  font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+/* Fade during the tip turn-over (paintSafetyTip toggles .is-swapping). */
+.safety-body { transition: opacity 0.25s ease; }
+.safety-body.is-swapping { opacity: 0; }
+
 /* ── Status strip ───────────────────────────────────────────────────── */
 #status-strip {
   flex-shrink: 0;

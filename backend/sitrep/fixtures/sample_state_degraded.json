@@ -256,6 +256,37 @@
       "last_good_at": "2026-06-13T04:55:00-04:00"
     }
   },
+  "safety_tips": {
+    "enabled": true,
+    "rotation_seconds": 15,
+    "tips": [
+      {
+        "id": "general-01",
+        "text": "Tell someone your route and expected return before you head out. A check-in plan is only useful if it exists before something goes wrong.",
+        "category": "communication",
+        "tags": [
+          "communication"
+        ]
+      },
+      {
+        "id": "general-05",
+        "text": "Treat every downed line as live. Stay back the length of a span and call it in \u2014 the ground around it can be energized.",
+        "category": "site-hazard",
+        "tags": [
+          "site-hazard",
+          "electrical"
+        ]
+      },
+      {
+        "id": "general-03",
+        "text": "Hi-vis works on contrast, not color. At dusk and in rain, add lights \u2014 drivers see what stands out, not what's bright.",
+        "category": "ppe",
+        "tags": [
+          "ppe"
+        ]
+      }
+    ]
+  },
   "sources": {
     "nws": {
       "name": "NWS FFC",
