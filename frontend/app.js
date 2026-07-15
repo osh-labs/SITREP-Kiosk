@@ -159,6 +159,7 @@ const $activity   = document.getElementById('card-activity');
 const $mapDegraded = document.getElementById('map-degraded');
 const $chartTemp  = document.getElementById('card-chart-temp');
 const $forecast   = document.getElementById('card-forecast');
+const $safety     = document.getElementById('card-safety');
 const $strip      = document.getElementById('status-strip');
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */
@@ -355,6 +356,9 @@ function applyModeLayout(mode) {
     right.appendChild($activity);
     right.appendChild($forecast);
   }
+  // Safety tips revolve at the bottom of the right column in both modes,
+  // filling the remaining open space.
+  if ($safety) right.appendChild($safety);
 }
 
 function renderOverallRisk(state) {
@@ -596,6 +600,102 @@ function renderForecastMini(state) {
     ${cardTitle('3-Day Look Ahead', 'calendar-dots')}
     <div class="card-body">${deg}${cards}${spcHtml}</div>
     ${cardFooter(src)}`;
+}
+
+/* ── Safety tips (revolving card) ─────────────────────────────────────────── */
+
+/* The backend sends the currently-eligible pool (weather-gated by tag); the
+   frontend shuffles it once and revolves through it on its own timer so the
+   card turns over smoothly between the slower /api/state polls. */
+let safetyPool      = [];     // shuffled copy of the eligible tips
+let safetyIdx       = 0;      // index of the tip currently shown
+let safetyTimer     = null;   // rotation interval
+let safetySignature = null;   // ids of the last pool, to detect membership changes
+
+/** Fisher–Yates shuffle (returns a new array; input untouched). */
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** Paint the tip at the current index into the card body (with a brief fade). */
+function paintSafetyTip() {
+  if (!$safety || safetyPool.length === 0) return;
+  const tip = safetyPool[safetyIdx % safetyPool.length];
+  const cat = tip.category
+    ? `<span class="safety-cat">${esc(String(tip.category).replace(/[-_]/g, ' '))}</span>`
+    : '';
+  const body = $safety.querySelector('.safety-body');
+  const html = `
+    ${ph('lightbulb', { weight: 'fill', cls: 'safety-icon' })}
+    <p class="safety-text">${esc(tip.text)}</p>
+    ${cat}`;
+  if (body) {
+    // Fade out → swap → fade in, so the turn-over reads as a deliberate change.
+    body.classList.add('is-swapping');
+    setTimeout(() => {
+      body.innerHTML = html;
+      body.classList.remove('is-swapping');
+    }, 250);
+  }
+}
+
+/** Advance to the next tip; reshuffle (avoiding an immediate repeat) at wrap. */
+function advanceSafetyTip() {
+  if (safetyPool.length <= 1) return;
+  safetyIdx += 1;
+  if (safetyIdx >= safetyPool.length) {
+    const last = safetyPool[safetyPool.length - 1];
+    safetyPool = shuffled(safetyPool);
+    // Avoid showing the same tip twice in a row across the reshuffle boundary.
+    if (safetyPool.length > 1 && safetyPool[0].id === last.id) {
+      [safetyPool[0], safetyPool[1]] = [safetyPool[1], safetyPool[0]];
+    }
+    safetyIdx = 0;
+  }
+  paintSafetyTip();
+}
+
+function renderSafetyTips(state) {
+  if (!$safety) return;
+  const st = state.safety_tips || {};
+  const tips = Array.isArray(st.tips) ? st.tips : [];
+
+  // Nothing to show (disabled, no file, or all tips gated out): hide the card
+  // so it never leaves a blank frame on the board.
+  if (st.enabled === false || tips.length === 0) {
+    if (safetyTimer) { clearInterval(safetyTimer); safetyTimer = null; }
+    safetyPool = []; safetySignature = null;
+    $safety.classList.add('hidden');
+    return;
+  }
+  $safety.classList.remove('hidden');
+
+  // Rebuild the shell once; the body is swapped in place on each rotation.
+  if (!$safety.querySelector('.safety-body')) {
+    $safety.innerHTML = `
+      ${cardTitle('Safety Tip', 'shield-check')}
+      <div class="card-body safety-body"></div>`;
+  }
+
+  // Only reshuffle when the eligible set actually changes (e.g. a heat tip drops
+  // in/out), so a routine poll doesn't jarringly reset the rotation.
+  const signature = tips.map(t => t.id).sort().join('|');
+  if (signature !== safetySignature) {
+    safetySignature = signature;
+    safetyPool = shuffled(tips);
+    safetyIdx = 0;
+    paintSafetyTip();
+  }
+
+  // (Re)arm the rotation timer to the configured cadence.
+  const secs = Math.max(4, Number(st.rotation_seconds) || 15);
+  if (safetyTimer) clearInterval(safetyTimer);
+  safetyTimer = setInterval(advanceSafetyTip, secs * 1000);
 }
 
 /* ── Bottom status strip ──────────────────────────────────────────────────── */
@@ -1224,6 +1324,7 @@ function renderDashboard(state) {
   renderMap(state);
   renderTempChart(state);
   renderForecastMini(state);
+  renderSafetyTips(state);
   renderStatusStrip(state);
 }
 

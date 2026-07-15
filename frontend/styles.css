@@ -196,6 +196,14 @@ html, body {
 /* Left column has just Hazards + Briefing now — let them grow to fill the
    space the relocated Disruptions card left behind (Hazards is the focus). */
 .dash-col-left .card { flex: 1 1 auto; }
+/* Right column: temp chart pins to the top; the 3-day look-ahead and the
+   Safety Tips card pin to the bottom (safety snapped to the very bottom, 3-day
+   clamped directly above it). The middle card — Disruptions/Alerts in the
+   morning, Hazards in the afternoon — expands and contracts to take up the
+   slack between them. */
+.dash-col-right > .card { flex: 0 0 auto; }
+.dash-col-right > #card-activity,
+.dash-col-right > #card-hazards { flex: 1 1 auto; min-height: 0; }
 .card-head {
   flex-shrink: 0;
   padding: 0.5rem 1rem;
@@ -412,6 +420,35 @@ html, body {
 .spc-enhanced { background: var(--sev-caution-bg);border-color: var(--sev-caution-border);color: var(--sev-caution-text); }
 .spc-moderate { background: var(--sev-danger-bg); border-color: var(--sev-danger-border); color: var(--sev-danger-text); }
 .spc-high     { background: var(--sev-extreme-bg);border-color: var(--sev-extreme-border);color: var(--sev-extreme-text); }
+
+/* ── Safety tips (revolving card) ───────────────────────────────────── */
+/* Fills the remaining space at the bottom of the right column. One tip at a
+   time, centered and sized for across-the-room legibility (PRD NFR-7). */
+#card-safety { border-top: 1px solid var(--brand-blue); }
+#card-safety .card-head { border-bottom-color: var(--accent); }
+#card-safety .card-title-icon { color: var(--accent); }
+.safety-body {
+  justify-content: center; align-items: center; text-align: center;
+  gap: 0.5rem;
+}
+.safety-icon {
+  font-style: normal; color: var(--accent);
+  font-size: 2rem; line-height: 1; flex-shrink: 0;
+}
+.safety-text {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-normal);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.safety-cat {
+  font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+/* Fade during the tip turn-over (paintSafetyTip toggles .is-swapping). */
+.safety-body { transition: opacity 0.25s ease; }
+.safety-body.is-swapping { opacity: 0; }
 
 /* ── Status strip ───────────────────────────────────────────────────── */
 #status-strip {

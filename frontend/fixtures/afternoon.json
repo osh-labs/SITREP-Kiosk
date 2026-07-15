@@ -301,6 +301,45 @@
       "last_good_at": "2026-06-13T15:10:00-04:00"
     }
   },
+  "safety_tips": {
+    "enabled": true,
+    "rotation_seconds": 30,
+    "tips": [
+      {
+        "id": "heat-02",
+        "text": "Build shade into the plan on hot days. Rotate heavy work to the cooler hours and take breaks out of the sun, not just off your feet.",
+        "category": "heat",
+        "tags": [
+          "heat"
+        ]
+      },
+      {
+        "id": "lightning-02",
+        "text": "Clear elevated and exposed work early when storms are forecast. Don't wait for the first strike to decide to come down.",
+        "category": "lightning",
+        "tags": [
+          "lightning"
+        ]
+      },
+      {
+        "id": "general-04",
+        "text": "Stop and re-look when the job changes. Most incidents happen after conditions shift and the plan doesn't.",
+        "category": "situational-awareness",
+        "tags": [
+          "situational-awareness"
+        ]
+      },
+      {
+        "id": "general-02",
+        "text": "Walk a full circle around the vehicle before backing up. Mirrors have blind spots; a 10-second lap doesn't.",
+        "category": "vehicle",
+        "tags": [
+          "driving",
+          "vehicle"
+        ]
+      }
+    ]
+  },
   "sources": {
     "nws": {
       "name": "NWS FFC",

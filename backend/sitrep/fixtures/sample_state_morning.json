@@ -294,6 +294,53 @@
       "last_good_at": "2026-06-13T06:40:00-04:00"
     }
   },
+  "safety_tips": {
+    "enabled": true,
+    "rotation_seconds": 30,
+    "tips": [
+      {
+        "id": "heat-01",
+        "text": "Drink water before you're thirsty. Thirst means you're already behind \u2014 sip on a schedule, not on demand.",
+        "category": "heat",
+        "tags": [
+          "heat"
+        ]
+      },
+      {
+        "id": "lightning-01",
+        "text": "When thunder rolls, head indoors or into a hard-top vehicle. Wait 30 minutes after the last thunder before going back out.",
+        "category": "lightning",
+        "tags": [
+          "lightning"
+        ]
+      },
+      {
+        "id": "general-01",
+        "text": "Tell someone your route and expected return before you head out. A check-in plan is only useful if it exists before something goes wrong.",
+        "category": "communication",
+        "tags": [
+          "communication"
+        ]
+      },
+      {
+        "id": "general-02",
+        "text": "Walk a full circle around the vehicle before backing up. Mirrors have blind spots; a 10-second lap doesn't.",
+        "category": "vehicle",
+        "tags": [
+          "driving",
+          "vehicle"
+        ]
+      },
+      {
+        "id": "general-03",
+        "text": "Hi-vis works on contrast, not color. At dusk and in rain, add lights \u2014 drivers see what stands out, not what's bright.",
+        "category": "ppe",
+        "tags": [
+          "ppe"
+        ]
+      }
+    ]
+  },
   "sources": {
     "nws": {
       "name": "NWS FFC",

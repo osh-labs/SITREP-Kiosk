@@ -140,6 +140,15 @@ A `source` block:
     "source": { "name": "Weather Map", "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" }
   },
 
+  "safety_tips": {
+    "enabled": true,
+    "rotation_seconds": 30,
+    "tips": [
+      { "id": "heat-01", "text": "Drink water before you're thirsty. Thirst means you're already behind — sip on a schedule, not on demand.", "category": "heat", "tags": ["heat"] },
+      { "id": "general-01", "text": "Tell someone your route and expected return before you head out.", "category": "communication", "tags": ["communication"] }
+    ]
+  },
+
   "sources": {
     "nws":         { "name": "NWS FFC",    "ok": true, "stale": false, "fetched_at": "2026-06-13T06:35:00-04:00", "age_seconds": 300, "last_good_at": "2026-06-13T06:35:00-04:00" },
     "spc":         { "name": "SPC",        "ok": true, "stale": false, "fetched_at": "2026-06-13T06:40:00-04:00", "age_seconds": 120, "last_good_at": "2026-06-13T06:40:00-04:00" },
@@ -162,6 +171,7 @@ A `source` block:
 | `forecast_3day.spc_outlook` | **SPC** | yes |
 | `astro.*` | **computed** (deterministic, no feed) | n/a — exact |
 | `weather_map.*` (config) + alert polygons via `GET /api/alerts.geojson` | config + **NWS** (`sources.weather_map`) | alert shapes authoritative |
+| `safety_tips.*` | **authored offline** (`config/safety_tips.yaml`), weather-gated in code | static content, never model-generated |
 
 > The single dashboard ignores `display.dwell_seconds` (a carousel relic). Map base
 > + radar tiles load directly in the browser from CARTO/IEM — a documented
@@ -186,6 +196,15 @@ A `source` block:
   "Interstate" is matched against the authoritative Georgia route list in
   `config.traffic.interstate_routes`; business routes (e.g. "I-75 BUS") are
   downgraded to the major-state-road tier.
+- **`safety_tips`** carries the revolving "Safety Tip" card: `tips[]` is the pool
+  of currently-eligible tips (each `{id, text, category, tags}`) and
+  `rotation_seconds` is the client-side turn-over cadence. Content is authored
+  offline and checked in — **never model-generated**. Eligibility is
+  deterministic: tags named in `config.safety_tips.conditions` (`heat`, `cold`,
+  `lightning`) gate a tip on live weather; all other tags are descriptive and
+  never restrict it. The frontend shuffles `tips[]` and revolves through it; an
+  empty pool (or `enabled: false`) hides the card. It carries no `source` block —
+  the content is local, so the card stays up even when feeds are degraded.
 - **`display.mode`** is `"morning"` or `"afternoon"`, computed by the backend
   from config mode windows. Morning slide set: Briefing, Weather, Disruptions,
   3-Day. Afternoon set: Weather, PM Commute (`commute`), 3-Day.

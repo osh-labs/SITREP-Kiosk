@@ -13,6 +13,7 @@ from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 from . import astro as astro_module
+from . import safety_tips as safety_tips_module
 from .models import (
     AirQuality,
     AlertEvent,
@@ -30,6 +31,7 @@ from .models import (
     HourlyPoint,
     LocationBlock,
     MapBlock,
+    SafetyTipsBlock,
     SourcesMap,
     SpcOutlook,
     TodayForecast,
@@ -442,6 +444,12 @@ def build_state(
     air_quality = _build_air_quality(airnow_data, airnow_sb)
     weather_map = _build_weather_map(config, weather_map_sb)
 
+    # Safety tips: weather-gated pool of authored tips (see safety_tips.py).
+    # Reuses the already-computed hazard flags for the lightning gate.
+    safety_tips = SafetyTipsBlock.from_dict(
+        safety_tips_module.select_tips(nws_data, spc_data, hazards, config)
+    )
+
     sources_map = _build_sources_map(
         nws_sb, spc_sb, ga511_sb, airnow_sb, openmeteo_sb, weather_map_sb
     )
@@ -459,5 +467,6 @@ def build_state(
         forecast_3day=forecast,
         astro=astro,
         weather_map=weather_map,
+        safety_tips=safety_tips,
         sources=sources_map,
     )

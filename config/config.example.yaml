@@ -134,6 +134,27 @@ traffic:
     - '\bhwy\b'
     - '\bhighway\b'
 
+# Revolving "Safety Tips" card. Tip *content* is authored offline and lives in a
+# separate file (config/safety_tips.yaml, falling back to the committed
+# config/safety_tips.example.yaml). No model runs at render time — the backend
+# just picks the currently-eligible tips and the frontend revolves through them.
+#
+# Tags gate a tip on live weather. Only the tags named under `conditions` gate;
+# every other tag (ppe, driving, site-hazard, …) is descriptive and always shows.
+#   heat      → shown only when today's high (or heat index) is at/above the value
+#   cold      → shown only when today's low (or current temp) is at/below the value
+#   lightning → shown only when thunderstorms/severe are flagged or in the forecast
+safety_tips:
+  enabled: true
+  file: "config/safety_tips.yaml"   # committed authored list; example file is the fallback
+  rotation_seconds: 30              # how long each tip shows before revolving (frontend)
+  max_pool: 150                     # cap on eligible tips (guards payload; set above the
+                                    # authored total so every eligible tip gets screen time)
+  conditions:
+    heat:  { high_f_at_or_above: 85 }   # "hot day" gate for heat-tagged tips
+    cold:  { low_f_at_or_below: 40 }    # "cold day" gate for cold-tagged tips
+    lightning: {}                       # driven by hazard flags/SPC/forecast — no threshold
+
 # D5 ranking, highest first. AQI is handled as a separate callout, not ranked here.
 ranking_order:
   - severe_weather
