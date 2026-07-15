@@ -7,6 +7,8 @@
   <title>Field SITREP Board</title>
   <!-- Vendored MapLibre GL (no CDN at boot) -->
   <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
+  <!-- Vendored Phosphor icon font (no CDN at boot) -->
+  <link rel="stylesheet" href="vendor/phosphor/phosphor.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,7 +20,7 @@
 
   <!-- Fatal-error screen (shown only on first-load failure with no cached state) -->
   <div id="error-screen" role="alert" aria-live="assertive">
-    <span class="error-icon" aria-hidden="true">&#9888;</span>
+    <i class="ph-fill ph-warning-octagon error-icon" aria-hidden="true"></i>
     <div class="error-title">Unable to load board data</div>
     <div class="error-detail" id="error-detail">Check network connection and backend service.</div>
   </div>
@@ -29,7 +31,7 @@
     <!-- Persistent header: UC logo + title (left) · context + clock (center) · risk + ZeroHarm (right) -->
     <header id="global-header" aria-label="Board header">
       <div class="header-zone header-left">
-        <img class="brand-logo" id="brand-uc" src="assets/uc-logo.svg" alt="United Consulting">
+        <img class="brand-logo" id="brand-uc" src="assets/uc-logo-white.png" alt="United Consulting">
         <span class="board-title">Field SITREP</span>
       </div>
       <div class="header-zone header-center">
@@ -45,13 +47,13 @@
           <span id="overall-risk" aria-label="Overall risk level"></span>
           <span id="next-update" aria-label="Next update"></span>
         </div>
-        <img class="brand-logo" id="brand-zeroharm" src="assets/zeroharm-logo.svg" alt="ZeroHarm safety program">
+        <img class="brand-logo" id="brand-zeroharm" src="assets/zeroharm-logo-white.png" alt="ZeroHarm safety program">
       </div>
     </header>
 
     <!-- Reconnecting / stale-fetch indicator -->
     <div id="status-bar" role="status" aria-live="polite">
-      <span aria-hidden="true">&#9679;</span>
+      <i class="ph ph-arrows-clockwise status-spin" aria-hidden="true"></i>
       <span id="status-text">Reconnecting&hellip;</span>
     </div>
 

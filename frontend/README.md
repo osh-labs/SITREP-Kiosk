@@ -70,7 +70,8 @@ Strip:    Temp · Forecast (high + heat index / low) · Precip · Air Quality ·
 | `styles.css` | Dark theme; severity conveyed by icon+label+color |
 | `app.js` | Data fetching, dashboard rendering, Leaflet map — vanilla JS only |
 | `vendor/leaflet/` | Vendored Leaflet 1.9.4 (`leaflet.js`, `leaflet.css`, marker images) |
-| `assets/` | UC + ZeroHarm logos |
+| `vendor/phosphor/` | Vendored Phosphor icon font 2.1.1 (`phosphor.css` + woff2). UI icons throughout — see the `ph()` helper in `app.js`. Vendored, not CDN, so the kiosk survives reboot offline |
+| `assets/` | UC + ZeroHarm logos. Header uses the white transparent PNGs (`*-white.png`); source SVGs kept alongside |
 | `fixtures/` | Dev-only copies of `backend/sitrep/fixtures/` for `?fixture=` mode |
 
 ## Degraded state
