@@ -92,7 +92,11 @@ keys, never put them in the frontend, never commit `.env`.
 - Authoritative numbers render verbatim from source. No model-generated figures.
 - Never present stale data as current. Each source has a freshness timestamp; past
   its staleness limit, show the degraded state (PRD §6.6) with the data's age.
-- Localhost only. No inbound network service, no ports exposed beyond the loopback.
+- LAN-visible by design: the backend binds `0.0.0.0` so other screens on the
+  facility network can view the same board (`http://<mini-pc-ip>:PORT`). It is
+  still read-only, no-auth, single-facility traffic only — never expose it
+  beyond the local network (no port-forwarding, no public DNS). Set
+  `SITREP_HOST=127.0.0.1` to fall back to loopback-only if needed.
 - Respect the 511GA and AirNow rate limits.
 - A failed single source must not blank the board; other slides keep running.
 

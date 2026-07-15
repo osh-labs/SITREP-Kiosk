@@ -35,7 +35,9 @@ cd backend
 SITREP_DEMO=1 python -m sitrep
 ```
 
-The server binds to `127.0.0.1:8080` (loopback only).
+The server binds to `0.0.0.0:8080` by default, so it's reachable from other
+devices on the same LAN (e.g. `http://<mini-pc-ip>:8080`) as well as from the
+kiosk itself. Set `SITREP_HOST=127.0.0.1` to restrict it to loopback only.
 
 Check it is working:
 ```bash
@@ -86,6 +88,12 @@ Tests run with no network and no API keys. All 69 tests should pass.
 
 ```bash
 SITREP_PORT=9090 SITREP_DEMO=1 python -m backend.sitrep
+```
+
+## Restricting to loopback only
+
+```bash
+SITREP_HOST=127.0.0.1 python -m backend.sitrep
 ```
 
 ## Configuration

@@ -11,7 +11,9 @@ Demo mode (SITREP_DEMO=1 or no API keys):
   Serves fixture JSON from backend/sitrep/fixtures/
   Supports ?scenario=morning|afternoon|degraded query param.
 
-Binds to 127.0.0.1 only (loopback). Port from SITREP_PORT (default 8080).
+Binds to 0.0.0.0 by default (LAN-visible for multi-screen viewing); set
+SITREP_HOST=127.0.0.1 to restrict to loopback only. Port from SITREP_PORT
+(default 8080).
 """
 from __future__ import annotations
 
