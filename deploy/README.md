@@ -81,7 +81,7 @@ without rebooting, log in as the kiosk user on tty1 and run `startx`.
 | Python | 3.11 or 3.12 (`apt install python3-venv`) |
 | Chromium | `chromium-browser` (snap, installed by `install.sh`) |
 | Network | Internet access for api.weather.gov, SPC, 511ga.org, airnowapi.org, api.anthropic.com |
-| Ports | Nothing exposed externally; backend binds `127.0.0.1:8080` only |
+| Ports | Backend binds `0.0.0.0:8080` (LAN-visible by default so other screens on the facility network can view the board); set `SITREP_HOST=127.0.0.1` to restrict to the kiosk only |
 
 > **Other distros:** the script targets Ubuntu/Debian (`apt`). On Fedora/RHEL/Arch
 > the package names differ but the design (Xorg + Openbox + getty auto-login +

@@ -2,7 +2,9 @@
 Entry point: python -m sitrep  (from backend/)
          or: python -m backend.sitrep  (from repo root)
 
-Launches uvicorn on 127.0.0.1:$SITREP_PORT (default 8080).
+Launches uvicorn on $SITREP_HOST:$SITREP_PORT (default 0.0.0.0:8080), so the
+board is reachable from other devices on the facility LAN in addition to the
+kiosk itself. Set SITREP_HOST=127.0.0.1 to restrict to loopback only.
 """
 from __future__ import annotations
 
@@ -23,7 +25,7 @@ log = logging.getLogger(__name__)
 
 def main() -> None:
     port = int(os.environ.get("SITREP_PORT", "8080"))
-    host = "127.0.0.1"  # loopback only — no external exposure
+    host = os.environ.get("SITREP_HOST", "0.0.0.0")  # LAN-visible by default
 
     log.info("Starting SITREP backend on %s:%d", host, port)
 
