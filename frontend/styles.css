@@ -429,11 +429,12 @@ html, body {
 #card-safety .card-title-icon { color: var(--accent); }
 .safety-body {
   justify-content: center; align-items: center; text-align: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
-.safety-icon {
-  font-style: normal; color: var(--accent);
-  font-size: 2rem; line-height: 1; flex-shrink: 0;
+/* Category as a subtitle above the tip. */
+.safety-cat {
+  font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent);
 }
 .safety-text {
   font-size: var(--fs-lg);
@@ -441,10 +442,6 @@ html, body {
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-}
-.safety-cat {
-  font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--text-muted);
 }
 /* Fade during the tip turn-over (paintSafetyTip toggles .is-swapping). */
 .safety-body { transition: opacity 0.25s ease; }

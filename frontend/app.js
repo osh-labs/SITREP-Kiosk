@@ -630,10 +630,10 @@ function paintSafetyTip() {
     ? `<span class="safety-cat">${esc(String(tip.category).replace(/[-_]/g, ' '))}</span>`
     : '';
   const body = $safety.querySelector('.safety-body');
+  // Category as a subtitle above the tip; the lightbulb now lives in the title.
   const html = `
-    ${ph('lightbulb', { weight: 'fill', cls: 'safety-icon' })}
-    <p class="safety-text">${esc(tip.text)}</p>
-    ${cat}`;
+    ${cat}
+    <p class="safety-text">${esc(tip.text)}</p>`;
   if (body) {
     // Fade out → swap → fade in, so the turn-over reads as a deliberate change.
     body.classList.add('is-swapping');
@@ -678,7 +678,7 @@ function renderSafetyTips(state) {
   // Rebuild the shell once; the body is swapped in place on each rotation.
   if (!$safety.querySelector('.safety-body')) {
     $safety.innerHTML = `
-      ${cardTitle('Safety Tip', 'shield-check')}
+      ${cardTitle('Safety Tip', 'lightbulb')}
       <div class="card-body safety-body"></div>`;
   }
 
