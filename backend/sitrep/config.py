@@ -95,7 +95,7 @@ _DEFAULTS: dict[str, Any] = {
         "rotation": {
             "enabled": True,
             "interval_seconds": 20,
-            "modes": ["radar", "alerts", "temps"],
+            "modes": ["radar", "alerts", "temps", "traffic"],
         },
         # States the alert-polygon overlay covers (NWS /alerts/active?area=...).
         "alerts": {

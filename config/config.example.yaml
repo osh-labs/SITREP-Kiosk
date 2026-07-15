@@ -28,7 +28,8 @@ weather_map:
   default_zoom: 7                 # 7 spans Paducah KY → St. Augustine FL on the 4K kiosk
   min_zoom: 5
   max_zoom: 10
-  base_style: voyager             # voyager | dark | dark_nolabels | light | osm
+  # base_style is no longer configurable — the map is locked to the dark
+  # vector style to match the rest of the dark-themed board.
   layers:
     radar:  { default_on: true, opacity: 0.7 }
     alerts: { default_on: true }

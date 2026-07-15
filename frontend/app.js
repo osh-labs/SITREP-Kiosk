@@ -953,7 +953,10 @@ function initMap(state) {
   }
 
   const center   = cfg.center || { lat: 33.749, lon: -84.388 };
-  const styleUrl = VECTOR_STYLES[cfg.base_style] || VECTOR_STYLES.dark;
+  // Map style is locked to dark regardless of config — the rest of the board
+  // is a fixed dark theme (styles.css --bg) and a light basemap clashes badly
+  // on the kiosk TV. base_style is intentionally not read here.
+  const styleUrl = VECTOR_STYLES.dark;
 
   map = new maplibregl.Map({
     container: 'map',

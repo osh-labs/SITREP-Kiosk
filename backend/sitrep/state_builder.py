@@ -175,7 +175,7 @@ _DEFAULT_MAP_CONFIG = {
         "temps": {"default_on": True, "opacity": 0.85},
     },
     "animation": {"enabled": True, "frames": 8, "interval_ms": 600, "refresh_seconds": 300},
-    "rotation": {"enabled": True, "interval_seconds": 20, "modes": ["radar", "alerts", "temps"]},
+    "rotation": {"enabled": True, "interval_seconds": 20, "modes": ["radar", "alerts", "temps", "traffic"]},
     "alerts": {"area": ["GA", "TN", "AL", "FL", "SC", "NC", "KY"]},
     # Cities for the temperature view; full default set in sources/openmeteo_cities.py.
     "temps": {"cities": []},

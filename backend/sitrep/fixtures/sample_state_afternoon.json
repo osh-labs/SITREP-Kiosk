@@ -418,7 +418,8 @@
       "modes": [
         "radar",
         "alerts",
-        "temps"
+        "temps",
+        "traffic"
       ]
     },
     "temps": {
